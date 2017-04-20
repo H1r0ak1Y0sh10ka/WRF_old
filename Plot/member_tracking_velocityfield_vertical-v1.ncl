@@ -153,8 +153,35 @@ begin
 
     end do ;;;it loop
 
-
   end do ; iii loop
 
 
+;;;;;; ento zahyo junbi ;;;;;;;;
+
+    angle_div_deg=360.0/int2flt(n_angle_division)
+    angle_phi=new ( (/n_angle_division/),"float")
+    pi = 4.0*atan(1.0) 
+
+    angle_phi=new ( (/n_angle_division/),"float")
+    Cylind_x=new( (/n_radius+1,n_angle_division/),"float")  ;Cylindrical coordinate
+    Cylind_y=new( (/n_radius+1,n_angle_division/),"float")  ;Cylindrical coordinate
+
+    vtheta_cyclind=new( (/n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
+    vr_yclind=new( (/n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
+
+    do na = 0,n_angle_division-1
+    Angle=angle_div_deg*int2flt(na)
+    angle_phi(na)=pi*(Angle/180.0)
+    end do
+
 exit
+
+end
+
+
+
+
+
+
+
+
