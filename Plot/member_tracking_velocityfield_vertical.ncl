@@ -11,6 +11,8 @@ begin
 
 ;********** control part **********
 
+   TY_NAME = "PALI"
+
    WORK = "/Volumes/RAID01"
    dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
 
@@ -213,6 +215,7 @@ begin
   res = True
   res@gsnDraw             = False
   res@gsnFrame            = False
+  res@gsnMaximize         = True
   res@vpWidthF             = 0.60
   res@vpHeightF            = 0.35
   plots = new(2,graphic)
@@ -234,43 +237,45 @@ begin
   res@tmXBLabels = tostring(ispan(0,n_radius,5)*10)
   res@tiYAxisString        = "Height (km)"  
 
-  shade_opts = True 
-  shade_opts = res
-  shade_opts@cnFillOn          = True                   ; turn on color
-  shade_opts@lbLabelAutoStride = True                   ; nice label bar labels
-  shade_opts@cnLinesOn         = False                  ; no contour lines
-  shade_opts@cnFillPalette = "hotcolr_19lev"
+  shade01_opts = True 
+  shade01_opts = res
 
-  shade_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  shade_opts@cnMinLevelValF       =   -100                  ; set min contour level
-  shade_opts@cnMaxLevelValF       =    100                   ; set max contour level
-  shade_opts@cnLevelSpacingF      =    20                ; set contour spacing
-  ;shade_opts@lbTopMarginF = 0.65
-  ;shade_opts@lbBottomMarginF = 0.9
-  shade_opts@lbOrientation   = "vertical"
-  shade_opts@lbTitleString = "Shaded,Vertical wind(cm/s)"
-  shade_opts@lbTitlePosition      = "Right"                           ; title location
-  shade_opts@lbTitleDirection     = "Across"                          ; letter angle
-  shade_opts@lbTitleAngleF        = 90.                               ; title angle
-  shade_opts@lbTitleFontHeightF   = 0.015                              ; font height
+  shade01_opts@cnFillOn          = True                   ; turn on color
+  shade01_opts@lbLabelAutoStride = True                   ; nice label bar labels
+  shade01_opts@cnLinesOn         = False                  ; no contour lines
+  shade01_opts@cnFillPalette = "hotcolr_19lev"
 
-  contour_opts = True 
-  contour_opts = res
-  contour_opts@cnFillOn          = False                   ; turn on color
-  contour_opts@gsnLeftString   = "Contour,Radial wind(m/s)"
+  shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+  shade01_opts@cnMinLevelValF       =   -100                  ; set min contour level
+  shade01_opts@cnMaxLevelValF       =    100                   ; set max contour level
+  shade01_opts@cnLevelSpacingF      =    20                ; set contour spacing
 
-  contour_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  contour_opts@cnMinLevelValF       =   -20                  ; set min contour level
-  contour_opts@cnMaxLevelValF       =    20                   ; set max contour level
-  contour_opts@cnLevelSpacingF      =    5                ; set contour spacing
-  contour_opts@cnLineThicknessF     =   4.0
+  ;shade01_opts@lbTopMarginF = 0.65
+  ;shade01_opts@lbBottomMarginF = 0.9
+  shade01_opts@lbOrientation   = "vertical"
+  shade01_opts@lbTitleString = "Shaded,Vertical wind(cm/s)"
+  shade01_opts@lbTitlePosition      = "Right"                           ; title location
+  shade01_opts@lbTitleDirection     = "Across"                          ; letter angle
+  shade01_opts@lbTitleAngleF        = 90.                               ; title angle
+  shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
+
+  contour01_opts = True 
+  contour01_opts = res
+  contour01_opts@cnFillOn          = False                   ; turn on color
+  contour01_opts@gsnLeftString   = "Contour,Radial wind(m/s)"
+
+  contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+  contour01_opts@cnMinLevelValF       =   -20                  ; set min contour level
+  contour01_opts@cnMaxLevelValF       =    20                   ; set max contour level
+  contour01_opts@cnLevelSpacingF      =    5                ; set contour spacing
+  contour01_opts@cnLineThicknessF     =   4.0
 
    vr  = dim_avg_n(vr_cyclind(it,:,:,:),2)
    w   = 100*(dim_avg_n(w_cyclind(it,:,:,:),2))
    w!0 = "cm^-1"
 
-   plots(0)   = gsn_csm_contour(wks01, w ,shade_opts)
-   plot_dam   = gsn_csm_contour(wks01, vr,contour_opts) 
+   plots(0)   = gsn_csm_contour(wks01, w ,shade01_opts)
+   plot_dam   = gsn_csm_contour(wks01, vr,contour01_opts) 
                                                 
    overlay(plots(0),plot_dam)
 
@@ -289,15 +294,15 @@ begin
   shade02_opts@lbTitleAngleF        = 90.                               ; title angle
   shade02_opts@lbTitleFontHeightF   = 0.015                              ; font height
 
-
-  colors02 = (/(/ 81     ,163     ,204/),(/ 255,255,255/),\ 
-           (/153, 15, 15/), (/178, 44, 44/), \
-           (/204, 81, 81/), (/229, 126, 126/), \
-           (/255, 178, 178/),(/153, 84, 15/), \
-           (/178, 111, 44/), (/204, 142, 81/), \
-           (/229, 177, 126/),(/255, 216, 178/), \
-           (/107, 153, 15/), (/133, 178, 44/), \
-           (/163, 204, 81/), (/195, 229, 126/), (/229, 255, 178/)/)/ 255.
+  colors02 = (/(/ 81,163,204/),(/255,255,255/),\ 
+               (/153, 15, 15/),(/178, 44,  44/), \
+               (/204, 81, 81/),(/229,126, 126/), \
+               (/255,178,178/),(/153, 84,  15/), \
+               (/178,111, 44/),(/204,142,  81/), \
+               (/229,177,126/),(/255,216, 178/), \
+               (/107,153, 15/),(/133,178,  44/), \
+               (/163,204, 81/),(/195,229, 126/), \
+               (/229,255,178/)/)/ 255.
 
   shade02_opts@cnFillPalette = colors02
   shade02_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
@@ -327,12 +332,24 @@ begin
    plot_dam   = gsn_csm_vector(wks01, vr,w,vector02_opts) 
    overlay(plots(1),plot_dam)
 
+;
+; Maximize plots in frame.
+;
+; psres = True      
+;  maximize_output(wks01,psres)  ; calls draw and frame for you 
+
 
 ;************************************************
 ; create panel
 ;************************************************
   resP                     = True                ; modify the panel plot
-                                                 ; new resource added in NCL V6.4.0
+                                                  ; new resource added in NCL V6.4.0
+  resP@txString       =  "Case:"+TY_NAME+", Member:"+member(mmm) \   ; use this for NCL V6.3.0 and earlier
+                        +"~C~Initial time:"+times(0)+", Time:"+times(it)+"."
+  resP@txFontHeightF  = 0.018
+; resP@gsnPanelMainString  =  "Case:"+TY_NAME+", Member:"+member(mmm)  ;+\
+;                                  "~C~ Initial time:"+times(0)+", Time:"+times(it)+"."
+ 
   gsn_panel(wks01,plots,(/2,1/),resP)               ; now draw as one plot
 
   delete(vr)
