@@ -286,7 +286,7 @@ begin
   shade02_opts@cnFillOn          = True                   ; turn on color
   shade02_opts@lbLabelAutoStride = True                   ; nice label bar labels
   shade02_opts@cnLinesOn         = False                  ; no contour lines
-  shade02_opts@lbTitleString = "Shaded,Tangential wind(cm/s)"
+  shade02_opts@lbTitleString = "Shaded,Tangential wind(m/s)"
 
   shade02_opts@lbOrientation   = "vertical"
   shade02_opts@lbTitlePosition      = "Right"                           ; title location
