@@ -260,8 +260,8 @@ begin
 
   shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
   shade01_opts@cnMinLevelValF       =     350                  ; set min contour level
-  shade01_opts@cnMaxLevelValF       =     380                   ; set max contour level
-  shade01_opts@cnLevelSpacingF      =     3                ; set contour spacing
+  shade01_opts@cnMaxLevelValF       =     370                   ; set max contour level
+  shade01_opts@cnLevelSpacingF      =     2                ; set contour spacing
 
   ;shade01_opts@lbTopMarginF = 0.65
   ;shade01_opts@lbBottomMarginF = 0.9
