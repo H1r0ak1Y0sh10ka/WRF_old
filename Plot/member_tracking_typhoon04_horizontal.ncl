@@ -131,7 +131,7 @@ begin
   timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
   n_times = count_unique_values(timesd) ; number of times in the file 
 
-    do it = 0,n_times-1
+    do it = 0,n_times-1,n_skiptime
      slpd(c_ttt,:,:)  = wrf_user_getvar(f[iii],"slp",it); (ncl_join,Time,bottom_top,south_north,west_east)
        wrf_smooth_2d( slpd, 4 ) ; smooth slp 
      u10d(c_ttt,:,:)  = wrf_user_getvar(f[iii],"U10",it) ; U component of the wind at 10m 
