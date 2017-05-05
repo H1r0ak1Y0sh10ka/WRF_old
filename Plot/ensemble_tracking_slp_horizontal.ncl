@@ -95,6 +95,9 @@ begin
   nlon = dimsizes(lon)
 
   times = wrf_user_getvar(f[0],"times",-1)  ; get all times in the file
+  if(ii.eq.0)then
+  Initialtime = times(0)
+  end if
   n_times = count_unique_values(times) ; number of times in the file 
   dx = f[0]@DX
   dy = f[0]@DY
@@ -111,11 +114,11 @@ begin
   print("Now time is "+times(itt)+".")
 
   do mmm=0,n_member-1,1
+
         print("Member is "+member(mmm))
         slpd(mmm,itt,:,:) = wrf_user_getvar(f[mmm],"slp",itt); (ncl_join,Time,bottom_top,south_north,west_east)
         u10d(mmm,itt,:,:)  = wrf_user_getvar(f[mmm],"U10",itt) ; U component of the wind at 10m 
         v10d(mmm,itt,:,:)  = wrf_user_getvar(f[mmm],"V10",itt) ; V component of the wind at 10m 
-
 
         if(c_ilat(mmm,c_ttt)-r_grid.gt.0.and.c_ilat(mmm,c_ttt)+r_grid.lt.nlat.and. \
            c_ilon(mmm,c_ttt)-r_grid.gt.0.and.c_ilon(mmm,c_ttt)+r_grid.lt.nlon)then
@@ -127,6 +130,7 @@ begin
         v10_grid(mmm,itt,:,:) =v10d@_FillValue
         slp_grid(mmm,itt,:,:) =slpd@_FillValue
         end if 
+
         print("Center is "+slp_grid(mmm,itt,r_grid,r_grid))
 
 
@@ -149,7 +153,7 @@ begin
   res@gsnLeftString            = "Contour:SLP(hPa), Vector:10m wind speed over 17(m/s)"
   res@gsnLeftStringFontHeightF = 0.015
   res@tiMainString        =  "Case:"+TY_NAME+", Member:Mean" \   ; use this for NCL V6.3.0 and earlier
-                        +"~C~Initial time:"+times(0)+", Time:"+times(itt)+"."
+                        +"~C~Initial time:"+Initialtime+", Time:"+times(itt)+"."
   res@tiMainFontHeightF        = 0.0175 
 
   if(c_ttt.lt.10)then
