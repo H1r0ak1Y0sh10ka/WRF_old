@@ -32,10 +32,11 @@ begin
    member = (/ "c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
    n_member    = dimsizes(member)
 
-   RULE = "01" ; 01 is  track of maximum relative voriticity on 850 hPa
+   ;RULE = "01" ; 01 is  track of maximum relative voriticity on 850 hPa
+    RULE = "02" ; 02 is  track of minimum sea level pressure
 
    s_dis = 15 ; search grid number from the previous point 
-   s_rad = 10 ; parameter mean_radius grids
+   s_rad = 10 ; parameter mean_radius grids and grids of edge
 
 ;*************************************************************************************
 
@@ -82,9 +83,15 @@ end if
   times     = new(n_timestep,string) ;1 hourly data of 7days forecast
   outline01 = new(n_timestep,string)
 
+   if(RULE.eq."01")then
    uu  = new ( (/nz,nlat,nlon/),"float")
    vv  = new ( (/nz,nlat,nlon/),"float")
    pp  = new ( (/nz,nlat,nlon/),"float")
+   else if(RULE.eq."02")then
+   slp  = new ( (/nlat,nlon/),"float")
+   end if
+   end if
+   
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -93,6 +100,11 @@ end if
   para01 = new ( (/n_member,n_timestep,nlat,nlon/),"float")
 
   do ii = 0,n_member-1,1  ; number of members 
+
+
+;********************************************************
+; Section : Reading all time steps from all wrfout files.
+;********************************************************
 
   filw = systemfunc("ls " + dirw + member(ii) + "/wrfout*")   ; or WRF_*grb
   f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
@@ -109,7 +121,11 @@ end if
   nx1 = dom_dims(dom_rank - 1) - 1
   ny1 = dom_dims(dom_rank - 2) - 1
   end if
- 
+
+;********************************************************
+; Section : Reading basis parameter from wrfout files.
+;********************************************************
+
   ttt = 0
 
   do jj = 0,listnum-1 ; number of data file by one member
@@ -127,16 +143,22 @@ end if
     do it = 0,ntimes-1
 
      times(ttt)     = timesd(it)  ; time
-     pp  = wrf_user_getvar(f[jj],"pressure",it) ; pressure is our vertical coordinate
-     uu  = wrf_user_getvar(f[jj],"ua",it)        ; u averaged to mass points
-     vv  = wrf_user_getvar(f[jj],"va",it)        ; v averaged to mass points
-
      if(RULE.eq."01")then
-     pressure = 850.   ; 850 hPa
-     u850   = wrf_user_intrp3d(uu,pp,"h",pressure,0.,False)
-     v850   = wrf_user_intrp3d(vv,pp,"h",pressure,0.,False)
-     para01(ii,ttt,:,:)  = uv2vr_cfd (u850,v850,lat,lon, 3) 
-     wrf_smooth_2d(para01(ii,ttt,:,:),100)
+             pp  = wrf_user_getvar(f[jj],"pressure",it) ; pressure is our vertical coordinate
+             uu  = wrf_user_getvar(f[jj],"ua",it)        ; u averaged to mass points
+             vv  = wrf_user_getvar(f[jj],"va",it)        ; v averaged to mass points
+             pressure = 850.   ; 850 hPa
+             u850   = wrf_user_intrp3d(uu,pp,"h",pressure,0.,False)
+             v850   = wrf_user_intrp3d(vv,pp,"h",pressure,0.,False)
+             para01(ii,ttt,:,:)  = uv2vr_cfd (u850,v850,lat,lon, 3) 
+             wrf_smooth_2d(para01(ii,ttt,:,:),100)
+
+     else if(RULE.eq."02")then
+             slp  = wrf_user_getvar(f[jj],"slp",it) ; pressure is our vertical coordinate
+             para01(ii,ttt,:,:)  = slp
+             wrf_smooth_2d(para01(ii,ttt,:,:),100)
+
+     end if
      end if
 
      ttt = ttt +1
@@ -168,6 +190,13 @@ end if
  do it = 0,ttt-1
  
   timestep_num(it) = it 
+
+;********************************************************
+; RULE 01 Section : Searching point of TC every time steps.
+;********************************************************
+
+  if(RULE.eq."01")then
+
   para_mean = new((/nlat,nlon/),float)
 
             do iy = 0,nlat-1
@@ -239,24 +268,103 @@ end if
 
      end if
      end if
+     delete(para_mean)
+
+;********************************************************
+; RULE 02 Section : Searching point of TC every time steps.
+;********************************************************
+
+     else if(RULE.eq."02")then
+   
+     para_dam = new((/nlat,nlon/),float)
+     para_dam = para01(ii,it,:,:)
+
+  if(it.gt.0.)then
+             do iy = 0,nlat-1,1
+              do ix = 0,nlon-1,1
+
+                    iyy = abs(bi_lat - iy) 
+                    ixx = abs(bi_lon - ix)
+
+                    if(iyy.gt.s_dis.or.ixx.gt.s_dis)then
+                    delete(para_dam(iy,ix))
+                    para_dam(iy,ix) =  default_fillvalue("float")
+                    end if 
+               end do
+             end do
+  end if
+
+       dims = dimsizes(para_dam)
+       x1d  = ndtooned(para_dam)      ; convert 2D array to 1D for use in maxind
+       inds = ind_resolve(minind (x1d), dims)    ; convert 1D array back to 2D 
+       ilat = inds(0,0)        ; select the latitude index where the X array is at its' minimum  
+       ilon = inds(0,1)        ; select the longitude index where the X array is at its' minimum
+
+     if (CHECK_FLAG.eq.0)then
+
+             if(ilat.ge.s_rad-1.and.ilat.le.nlat-s_rad-1.and.ilon.ge.s_rad-1.and.ilon.le.nlon-s_rad-1)then
+
+              lat_num(it) = ilat
+              lon_num(it) = ilon
+              lat_deg(it) = lat(ilat)   ; insert the latitude index into the lat coordinate variable
+              lon_deg(it) = lon(ilon)   ; insert the longitude index into the lon coordinate variable
+              c_para(it)  = para_dam(ilat,ilon)
+     
+              else
+
+              lat_num(it) = ilat@_FillValue   ; insert the latitude index into the lat coordinate variable
+              lon_num(it) = ilon@_FillValue   ; insert the longitude index into the lon coordinate variable
+              lat_deg(it) = lat@_FillValue   ; insert the latitude index into the lat coordinate variable
+              lon_deg(it) = lon@_FillValue   ; insert the longitude index into the lon coordinate variable
+
+              c_para(it)  = para_dam@_FillValue
+              CHECK_FLAG = 100
+
+              end if
+
+     else if (CHECK_FLAG.ne.0)then
+
+       lat_num(it) = ilat@_FillValue   ; insert the latitude index into the lat coordinate variable
+       lon_num(it) = ilon@_FillValue   ; insert the longitude index into the lon coordinate variable
+       lat_deg(it) = lat@_FillValue   ; insert the latitude index into the lat coordinate variable
+       lon_deg(it) = lon@_FillValue   ; insert the longitude index into the lon coordinate variable
+       c_para(it)  = para_dam@_FillValue
+       CHECK_FLAG = 100
+
+     end if
+     end if
+     delete(para_dam)
+
+
+
+     end if
+     end if
 
        bi_lat = ilat
        bi_lon = ilon
-       delete(para_mean)
+ 
 
  end do ; it loop
  delete(bi_lat)
  delete(bi_lon)
 
+
+;********************************************************
+;Section : Writing csv file.
+;********************************************************
+
   dq = str_get_dq()                ; double quote character
  
+   ;---Create dummy mixed data to write to CSV file
   if(RULE.eq."01")then
-  ;---Create dummy mixed data to write to CSV file
   fields = (/"Real time","Forecast time","nLat","nLon","Lat","Lon","RV850"/)
-  fields = dq + fields + dq                      ; Pre/append quotes to field names
-  header = [/str_join(fields,",")/]              ; Header is field names separated
+  else if(RULE.eq."02")then
+  fields = (/"Real time","Forecast time","nLat","nLon","Lat","Lon","c_slp"/)
+  end if
   end if
 
+  fields = dq + fields + dq                      ; Pre/append quotes to field names
+  header = [/str_join(fields,",")/]              ; Header is field names separated
   write_table(outfile, "w", header, "%s")   ; Write header to CSV file.
   a_list = [/times, timestep_num, lat_num, lon_num, lat_deg, lon_deg, c_para/]
   write_table (outfile, "a", a_list, "%s,%i,%f,%f,%f,%f,%f")
