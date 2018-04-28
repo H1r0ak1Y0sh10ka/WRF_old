@@ -6,7 +6,7 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 begin
 ;
 
-  scp_ver  = "v9"
+  scp_ver  = "v10"
 
   init_YYYY = "2016"
   init_M    = 1
@@ -23,8 +23,9 @@ begin
 ; type = "eps"
  type = "png"
 
-  plot_type  = 1 ;;;; 0 is max and min with mean and best track.
+  plot_type  = 2 ;;;; 0 is max and min with mean and best track.
                  ;;;; 1 is all members' contours without best track.
+                 ;;;; 2 is the ensemble number's plots by emphasis of each member.
 
   ibtracs_dir  = "/Volumes/HDD01/research/analysis/track/ibtracks/"
   ibtracs_data = "2016005N02187.ibtracs."
@@ -355,8 +356,13 @@ delete(fields)
 
   plot_legend = simple_legend(wks01,plots_mean,gres,lineres,textres)
 
-   end if   ;******************************************************************************************************************************
-   end if   ;******************************************************************************************************************************
+else if(plot_type.eq.2)then ;******************************************************************************************************************************
+  print("plot_type is 2.")
+
+
+end if   ;******************************************************************************************************************************
+end if   ;******************************************************************************************************************************
+end if   ;******************************************************************************************************************************
 
   draw(plots_mean)
   frame(wks01)
