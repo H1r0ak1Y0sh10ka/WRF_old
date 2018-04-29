@@ -3,24 +3,22 @@
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
-load "/Volumes/HDD01/research/ncl/wrf/radialAvg.ncl"
+load "./radialAvg.ncl"
 begin
 ;
 ; The WRF ARW input file.  
 ; This needs to have a ".nc" appended, so just do it.
 
-;********** control part **********
+;********** Part - Enter Constant, Directory, NAME and so on **********
 
    TY_NAME = "PALI"
 
    WORK = "/Volumes/RAID01"           ; WORK = "/Volumes/Yoshi-HDD01"
-   dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
 
    INIT = (/"20160106"/)
    n_INIT = dimsizes(INIT)
    
    MEMBER = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-   n_MEMBER = dimsizes(MEMBER)
 
    N_SKIPTIME = 12
 
@@ -29,13 +27,18 @@ begin
    N_ANGLE = 36  ; number
    DIS = 10000   ; meter
 
-   z_top = 20000
+   ZTOP = 20000
    N_ZLEVS = 101
-   zlevs = fspan(0,z_top,N_ZLEVS)
-   zlevs!0 = "lev"
 
 ; We generate plots, but what kind do we prefer?
-   type = "png"  ;  type = "eps"  ;  type = "x11"
+   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
+
+;********** Part - Calculate dimensions (do NOT change!!!) **********
+
+   dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
+   n_MEMBER = dimsizes(MEMBER)
+   zlevs = fspan(0,ZTOP,N_ZLEVS)
+   zlevs!0 = "lev"
 
 ;*************************************************************************************
 
@@ -226,7 +229,7 @@ begin
   do ir = 0, N_RADIUS,1
   do ia = 0, N_ANGLE-1
   if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
-   vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
+   vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(TYPEof(vg_cyclind))
   end if
   end do
   end do
@@ -239,7 +242,7 @@ begin
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
+  wks01 = gsn_open_wks(TYPE,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
   res = True
   res@gsnDraw             = False
@@ -387,7 +390,7 @@ ave_time_end = 60
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
+  wks01 = gsn_open_wks(TYPE,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
 
   res = True
   res@gsnDraw             = False
@@ -527,8 +530,8 @@ do it =0 ,c_ttt-1,N_SKIPTIME
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks02 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_mean-trackingcut_"+times(it))
-  wks03 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_sprd-trackingcut_"+times(it))
+  wks02 = gsn_open_wks(TYPE,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_mean-trackingcut_"+times(it))
+  wks03 = gsn_open_wks(TYPE,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_sprd-trackingcut_"+times(it))
 
   res = True
   res@gsnDraw             = False
