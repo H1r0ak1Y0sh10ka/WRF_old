@@ -9,12 +9,19 @@
 ; ====================================================================================================
 
 undef ( "rectangular2polar" )
-function rectangular2polar ( \
-  vrad[*][*]       : numeric \
+function rectangular2polar (  \
+  nlat[*]           : numeric, \
+  nlon[*]           : numeric, \
+  nangle[*]         : numeric, \
 )
 local None
 
 begin
+
+    do na = 0,N_ANGLE-1
+    Angle=angle_div_deg*int2flt(na)
+    angle_phi(na)=pi*(Angle/180.0)
+    end do
 
     do nr = 0,N_RADIUS,1
     do na = 0,N_ANGLE-1
