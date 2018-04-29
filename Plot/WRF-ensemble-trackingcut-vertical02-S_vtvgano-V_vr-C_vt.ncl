@@ -45,92 +45,90 @@ begin
 
   dirw = dirc + INIT(nnn) + "/???/"    ; input directory
   cccc = dirc + INIT(nnn) + "/c00/"    ; input directory
-
   wrflist = systemfunc("basename " + cccc +"wrfout*")
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
-  do mmm = 0, n_MEMBER-1,1
+    do mmm = 0, n_MEMBER-1,1
     trackdata = TRACK_DIRC+"/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
+
 ;---Read in file as array of strings so we can parse each line
-  lines  = asciiread(trackdata,-1,"string")
-  nlines = dimsizes(lines)   ; First line is not a header
+    lines  = asciiread(trackdata,-1,"string")
+    nlines = dimsizes(lines)   ; First line is not a header
 ;---This file has quotes around everything, which we don't want.
-  dq    = str_get_dq()
-  lines = str_sub_str(lines,dq,"")   ; Replace quotes with empty string
+    dq    = str_get_dq()
+    lines = str_sub_str(lines,dq,"")   ; Replace quotes with empty string
 ;---First line is name of each field
-  delim       = ","
-  field_names = str_split(lines(0),delim)
-  nfields     = dimsizes(field_names)
+    delim       = ","
+    field_names = str_split(lines(0),delim)
+    nfields     = dimsizes(field_names)
 ;---We're going to read the whole file as a 2D array of strings
-  fields = new((/nfields,nlines/),string)
-  if(mmm.eq.0)then
-  c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
-  c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
-  c_lat  = new ( (/n_MEMBER,nlines/),"float")
-  c_lon  = new ( (/n_MEMBER,nlines/),"float")
-  end if
+    fields = new((/nfields,nlines/),string)
+    if(mmm.eq.0)then
+    c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
+    c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
+    c_lat  = new ( (/n_MEMBER,nlines/),"float")
+    c_lon  = new ( (/n_MEMBER,nlines/),"float")
+    end if
+
 ;---ReMEMBER that fields start at 1, not 0.
-  do nf=0,nfields-1
-    fields(nf,:) = str_get_field(lines,nf+1,delim)    
-    c_ilat(mmm,:) = stringtointeger(fields(2,:))
-    c_lat(mmm,:)  = stringtofloat(fields(4,:))
-    c_ilon(mmm,:) = stringtointeger(fields(3,:))
-    c_lon(mmm,:)  = stringtofloat(fields(5,:))
-  end do
+      do nf=0,nfields-1
+      fields(nf,:) = str_get_field(lines,nf+1,delim)    
+      c_ilat(mmm,:) = stringtointeger(fields(2,:))
+      c_lat(mmm,:)  = stringtofloat(fields(4,:))
+      c_ilon(mmm,:) = stringtointeger(fields(3,:))
+      c_lon(mmm,:)  = stringtofloat(fields(5,:))
+      end do
 
-  filw = systemfunc("ls " + dirc + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
-  f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
-  ListSetType (f, "join")
+    filw = systemfunc("ls " + dirc + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
+    f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
+    ListSetType (f, "join")
 
-  dlat = wrf_user_getvar(f[0],"lat",0)  ; get all times in the file
-  dlon = wrf_user_getvar(f[0],"lon",0)  ; get all times in the file
-  lat  = dlat(:,0)
-  lon  = dlon(0,:)
-  nlat = dimsizes(lat)
-  nlon = dimsizes(lon)
-  sigma= f[0]->ZNU(0,:)
-  nz   = dimsizes(sigma)
-
-  dx = f[0]@DX
-  dy = f[0]@DY
-  ff  = new ( (/nlat,nlon/),"float")
-  ff(:,:)    = f[0]->F(0,:,:)
+    dlat    = wrf_user_getvar(f[0],"lat",0)  ; get all times in the file
+    dlon    = wrf_user_getvar(f[0],"lon",0)  ; get all times in the file
+    lat     = dlat(:,0)
+    lon     = dlon(0,:)
+    nlat    = dimsizes(lat)
+    nlon    = dimsizes(lon)
+    sigma   = f[0]->ZNU(0,:)
+    nz      = dimsizes(sigma)
+    dx      = f[0]@DX
+    dy      = f[0]@DY
+    ff      = new ( (/nlat,nlon/),"float")
+    ff(:,:) = f[0]->F(0,:,:)
   
-  n_timestep=0
-  do iii = 0,listnum-1,1
-  dtimes = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
-  n_times = count_unique_values(dtimes) ; number of times in the file 
-  n_timestep=n_timestep+n_times
-  end do ; iii loop
+    n_timestep=0
 
-  times   = new ( (/n_timestep/),"string")
-  uu      = new ( (/nz,nlat,nlon/),"float")
-  vv      = new ( (/nz,nlat,nlon/),"float")
- ; ww      = new ( (/nz,nlat,nlon/),"float")
-  zz      = new ( (/nz,nlat,nlon/),"float")
-  pp      = new ( (/nz,nlat,nlon/),"float")
-  tk      = new ( (/nz,nlat,nlon/),"float")
+    do iii = 0,listnum-1,1
+    dtimes = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
+    n_times = count_unique_values(dtimes) ; number of times in the file 
+    n_timestep=n_timestep+n_times
+    end do ; iii loop
 
-  div          = new ( (/nz,nlat,nlon/),"float")
-  vt           = new ( (/nz,nlat,nlon/),"float")
-  vr           = new ( (/nz,nlat,nlon/),"float")
-  div_levs     = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-  vt_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-  vr_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-  pp_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-  tk_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-  rho_levs     = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    times      = new ( (/n_timestep/),"string")
+    uu         = new ( (/nz,nlat,nlon/),"float")
+    vv         = new ( (/nz,nlat,nlon/),"float")
+    zz         = new ( (/nz,nlat,nlon/),"float")
+    pp         = new ( (/nz,nlat,nlon/),"float")
+    tk         = new ( (/nz,nlat,nlon/),"float")
+    div        = new ( (/nz,nlat,nlon/),"float")
+    vt         = new ( (/nz,nlat,nlon/),"float")
+    vr         = new ( (/nz,nlat,nlon/),"float")
 
-  rgas       = 287.058                        ; J/(kg-K) => m2/(s2 K)
-  ;rho_levs  = p_3levs/(rgas*t_3levs)         ; density => kg/m3
+    div_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    vt_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    vr_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    pp_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    tk_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    rho_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    rgas       = 287.058                        ; J/(kg-K) => m2/(s2 K)
 
     if(mmm.eq.0)then
 ;;;;;; ento zahyo junbi ;;;;;;;;
 
-    angle_div_deg=360.0/int2flt(N_ANGLE)
-    angle_phi=new ( (/N_ANGLE/),"float")
-    pi = 4.0*atan(1.0) 
+    angle_div_deg = 360.0/int2flt(N_ANGLE)
+    angle_phi     = new ( (/N_ANGLE/),"float")
+    pi            = 4.0*atan(1.0) 
 
     angle_phi=new ( (/N_ANGLE/),"float")
     Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
@@ -149,32 +147,31 @@ begin
 ;;;;;;;;;;;;;;;;;;;;;;;;
     end if
 
+    c_ttt=0
 
-  c_ttt=0
+    do iii =0,listnum-1,1
+    print("Now reading file is "+filw(iii))
 
-  do iii =0,listnum-1,1
-  print("Now reading file is "+filw(iii))
+    timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
+    n_times = count_unique_values(timesd) ; number of times in the file 
 
-  timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
-  n_times = count_unique_values(timesd) ; number of times in the file 
+      do it = 0,n_times-1, N_SKIPTIME
+      times(c_ttt)     = timesd(it)                             ; get all times in the file
+      uu(:,:,:)  = wrf_user_getvar(f[iii],"ua",it)        ; u averaged to mass points
+      vv(:,:,:)  = wrf_user_getvar(f[iii],"va",it)        ; v averaged to mass points
+      zz(:,:,:)  = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
+      pp(:,:,:)  = wrf_user_getvar(f[iii],"pressure",it)  ; pressure is our vertical coordinate
+      tk(:,:,:)  = wrf_user_getvar(f[iii],"tk",it)        ; tk is our vertical coordinate
 
-    do it = 0,n_times-1, N_SKIPTIME
-     times(c_ttt)     = timesd(it)                             ; get all times in the file
-     uu(:,:,:)  = wrf_user_getvar(f[iii],"ua",it)        ; u averaged to mass points
-     vv(:,:,:)  = wrf_user_getvar(f[iii],"va",it)        ; v averaged to mass points
-     zz(:,:,:)  = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-     pp(:,:,:)  = wrf_user_getvar(f[iii],"pressure",it)  ; pressure is our vertical coordinate
-     tk(:,:,:)  = wrf_user_getvar(f[iii],"tk",it)        ; tk is our vertical coordinate
-
-     vComps = calcWindComponents(uu(:,:,:),vv(:,:,:),lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
-     vt(:,:,:) = vComps[1]
-     vr(:,:,:) = vComps[0]
-     delete(vComps)
-     vt_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vt(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     vr_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     pp_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )         ; density => kg/m3
+      vComps = calcWindComponents(uu(:,:,:),vv(:,:,:),lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
+      vt(:,:,:) = vComps[1]
+      vr(:,:,:) = vComps[0]
+      delete(vComps)
+      vt_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vt(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+      vr_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+      pp_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+      tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+      rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )    ; density => kg/m3
 
     do nr = 0,N_RADIUS,1
     do na = 0,N_ANGLE-1
@@ -224,16 +221,15 @@ begin
     end do 
     end do 
 
-  do iz = 0, N_ZLEVS-1,1
-  do ir = 0, N_RADIUS,1
-  do ia = 0, N_ANGLE-1
-  if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
-   vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(TYPEof(vg_cyclind))
-  end if
-  end do
-  end do
-  end do
-  
+    do iz = 0, N_ZLEVS-1,1
+    do ir = 0, N_RADIUS,1
+    do ia = 0, N_ANGLE-1
+    if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
+     vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(TYPEof(vg_cyclind))
+    end if
+    end do
+    end do
+    end do
 
 
   print("Now drawing time is "+times(c_ttt))
@@ -281,7 +277,6 @@ begin
   shade01_opts@cnFillOn             = True                   ; turn on color
   shade01_opts@lbLabelAutoStride    = True                   ; nice label bar labels
   shade01_opts@cnLinesOn            = False                  ; no contour lines
-  ;shade01_opts@lbTitleString        = "Shaded,Tangential wind - Gradient wind(m/s)"
 
   shade01_opts@lbOrientation        = "vertical"
   shade01_opts@lbTitlePosition      = "Right"                           ; title location
@@ -301,18 +296,11 @@ begin
   contour01_opts = res
 
   contour01_opts@cnLineColor           = "green"   ; Set the line color
-  ;contour01_opts@cnFillOn             =  True                   ; turn on color
   contour01_opts@cnInfoLabelOn         = False  
-  ;contour01_opts@lbLabelAutoStride    =  True                   ; nice label bar labels
-  ;contour01_opts@cnLinesOn            =  False                  ; no contour lines
-  ;contour01_opts@lbTitleString        =  "Shaded,Tangential wind(m/s)"
   contour01_opts@cnLineThicknessF      =  12
   contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
   contour01_opts@cnLineLabelInterval           = 1             ; default = 2
   contour01_opts@cnLineLabelFontHeightF        = 0.025
-  ;contour01_opts@cnInfoLabelSide               = "Right"
-  ;contour01_opts@cnInfoLabelFontHeightF        = 0.02
-  ;contour01_opts@cnInfoLabelAngleF             = 90
 
   contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
   contour01_opts@cnMinLevelValF       =       5                ; set min contour level
@@ -447,18 +435,11 @@ ave_time_end = 60
   contour01_opts = res
 
   contour01_opts@cnLineColor           = "green"   ; Set the line color
-  ;contour01_opts@cnFillOn             =  True                   ; turn on color
   contour01_opts@cnInfoLabelOn         = False  
-  ;contour01_opts@lbLabelAutoStride    =  True                   ; nice label bar labels
-  ;contour01_opts@cnLinesOn            =  False                  ; no contour lines
-  ;contour01_opts@lbTitleString        =  "Shaded,Tangential wind(m/s)"
   contour01_opts@cnLineThicknessF      = 12
   contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
   contour01_opts@cnLineLabelInterval           = 1             ; default = 2
   contour01_opts@cnLineLabelFontHeightF        = 0.025
-  ;contour01_opts@cnInfoLabelSide               = "Right"
-  ;contour01_opts@cnInfoLabelFontHeightF        = 0.02
-  ;contour01_opts@cnInfoLabelAngleF             = 90
 
   contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
   contour01_opts@cnMinLevelValF       =       5                ; set min contour level
