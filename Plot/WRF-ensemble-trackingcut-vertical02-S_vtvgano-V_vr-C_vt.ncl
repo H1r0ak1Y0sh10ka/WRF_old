@@ -11,12 +11,12 @@ begin
 
 ;********** Part - Enter Constant, Directory, NAME and so on **********
 
-   TY_NAME = "PALI"
+  TY_NAME = "PALI"
 
-   WORK = "/Volumes/RAID01"           ; WORK = "/Volumes/Yoshi-HDD01"
+  WORK = "/Volumes/RAID01"           ; WORK = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
 
-   INIT = (/"20160106"/)
-   n_INIT = dimsizes(INIT)
+  INIT = (/"20160106"/)
    
    MEMBER = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
 
@@ -33,8 +33,9 @@ begin
 ; We generate plots, but what kind do we prefer?
    TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
-;********** Part - Calculate dimensions (do NOT change!!!) **********
+;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
 
+   n_INIT = dimsizes(INIT)
    dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
    n_MEMBER = dimsizes(MEMBER)
    zlevs = fspan(0,ZTOP,N_ZLEVS)
