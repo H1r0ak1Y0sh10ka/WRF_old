@@ -19,19 +19,19 @@ begin
    INIT = (/"20160106"/)
    n_INIT = dimsizes(INIT)
    
-   member = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-   n_member = dimsizes(member)
+   MEMBER = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
+   n_MEMBER = dimsizes(MEMBER)
 
-   n_skiptime = 12
+   N_SKIPTIME = 12
 
-   radius_km      = 200 ; kilometer
-   n_radius       = 25  ; number of grids
-   n_angle_division = 36  ; number
-   dis = 10000   ; meter
+   RADIUS_KM      = 200 ; kilometer
+   N_RADIUS       = 25  ; number of grids
+   N_ANGLE = 36  ; number
+   DIS = 10000   ; meter
 
    z_top = 20000
-   n_zlevs = 101
-   zlevs = fspan(0,z_top,n_zlevs)
+   N_ZLEVS = 101
+   zlevs = fspan(0,z_top,N_ZLEVS)
    zlevs!0 = "lev"
 
 ; We generate plots, but what kind do we prefer?
@@ -47,8 +47,8 @@ begin
   wrflist = systemfunc("basename " + cccc +"wrfout*")
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
-  do mmm = 0, n_member-1,1
-     trackdata = "/Volumes/HDD01/research/ncl/wrf/track/PALI_"+INIT(nnn)+"_"+member(mmm)+"-track_v25.csv"
+  do mmm = 0, n_MEMBER-1,1
+     trackdata = "/Volumes/HDD01/research/ncl/wrf/track/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
 ;---Read in file as array of strings so we can parse each line
   lines  = asciiread(trackdata,-1,"string")
@@ -63,12 +63,12 @@ begin
 ;---We're going to read the whole file as a 2D array of strings
   fields = new((/nfields,nlines/),string)
   if(mmm.eq.0)then
-  c_ilat  = new ( (/n_member,nlines/),"integer")
-  c_ilon  = new ( (/n_member,nlines/),"integer")
-  c_lat  = new ( (/n_member,nlines/),"float")
-  c_lon  = new ( (/n_member,nlines/),"float")
+  c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
+  c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
+  c_lat  = new ( (/n_MEMBER,nlines/),"float")
+  c_lon  = new ( (/n_MEMBER,nlines/),"float")
   end if
-;---Remember that fields start at 1, not 0.
+;---ReMEMBER that fields start at 1, not 0.
   do nf=0,nfields-1
     fields(nf,:) = str_get_field(lines,nf+1,delim)    
     c_ilat(mmm,:) = stringtointeger(fields(2,:))
@@ -77,7 +77,7 @@ begin
     c_lon(mmm,:)  = stringtofloat(fields(5,:))
   end do
 
-  filw = systemfunc("ls " + dirc + INIT(nnn) + "/" + member(mmm) + "/wrfout*")  ; or WRF_*grb
+  filw = systemfunc("ls " + dirc + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
   f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
   ListSetType (f, "join")
 
@@ -113,12 +113,12 @@ begin
   div          = new ( (/nz,nlat,nlon/),"float")
   vt           = new ( (/nz,nlat,nlon/),"float")
   vr           = new ( (/nz,nlat,nlon/),"float")
-  div_levs     = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
-  vt_levs      = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
-  vr_levs      = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
-  pp_levs      = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
-  tk_levs      = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
-  rho_levs     = new ( (/n_timestep,n_zlevs,nlat,nlon/),"float")
+  div_levs     = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+  vt_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+  vr_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+  pp_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+  tk_levs      = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+  rho_levs     = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
 
   rgas       = 287.058                        ; J/(kg-K) => m2/(s2 K)
   ;rho_levs  = p_3levs/(rgas*t_3levs)         ; density => kg/m3
@@ -126,21 +126,21 @@ begin
     if(mmm.eq.0)then
 ;;;;;; ento zahyo junbi ;;;;;;;;
 
-    angle_div_deg=360.0/int2flt(n_angle_division)
-    angle_phi=new ( (/n_angle_division/),"float")
+    angle_div_deg=360.0/int2flt(N_ANGLE)
+    angle_phi=new ( (/N_ANGLE/),"float")
     pi = 4.0*atan(1.0) 
 
-    angle_phi=new ( (/n_angle_division/),"float")
-    Cylind_x=new( (/n_radius+1,n_angle_division/),"float")  ;Cylindrical coordinate
-    Cylind_y=new( (/n_radius+1,n_angle_division/),"float")  ;Cylindrical coordinate
+    angle_phi=new ( (/N_ANGLE/),"float")
+    Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
+    Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
 
-    vt_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    vr_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    pp_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    ff_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    vg_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    rho_cyclind    =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float")    
-    do na = 0,n_angle_division-1
+    vt_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vr_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    pp_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    ff_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vg_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rho_cyclind    =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")    
+    do na = 0,N_ANGLE-1
     Angle=angle_div_deg*int2flt(na)
     angle_phi(na)=pi*(Angle/180.0)
     end do
@@ -156,7 +156,7 @@ begin
   timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
   n_times = count_unique_values(timesd) ; number of times in the file 
 
-    do it = 0,n_times-1, n_skiptime
+    do it = 0,n_times-1, N_SKIPTIME
      times(c_ttt)     = timesd(it)                             ; get all times in the file
      uu(:,:,:)  = wrf_user_getvar(f[iii],"ua",it)        ; u averaged to mass points
      vv(:,:,:)  = wrf_user_getvar(f[iii],"va",it)        ; v averaged to mass points
@@ -174,8 +174,8 @@ begin
      tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
      rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )         ; density => kg/m3
 
-    do nr = 0,n_radius,1
-    do na = 0,n_angle_division-1
+    do nr = 0,N_RADIUS,1
+    do na = 0,N_ANGLE-1
 
     Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
     Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
@@ -209,12 +209,12 @@ begin
     end do ; na loop
     end do ; nr loop
 
-      dpdr =  new( (/n_zlevs,n_radius+1,n_angle_division/),"float")
-      dpdr = (center_fINITe_diff_n (pp_cyclind(mmm,c_ttt,:,:,:),dis,False,0,1))*100
+      dpdr =  new( (/N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
+      dpdr = (center_fINITe_diff_n (pp_cyclind(mmm,c_ttt,:,:,:),DIS,False,0,1))*100
 
-    do nr=0,n_radius,1
-      RR = dis*nr
-    do na = 0, n_angle_division-1
+    do nr=0,N_RADIUS,1
+      RR = DIS*nr
+    do na = 0, N_ANGLE-1
           vg_cyclind(mmm,c_ttt,:,nr,na)  =  0.5*( \
                                             -1*ff_cyclind(mmm,c_ttt,:,nr,na) *RR \
                                             +sqrt( (ff_cyclind(mmm,c_ttt,:,nr,na)*RR)^2 +(4*RR/rho_cyclind(mmm,c_ttt,:,nr,na))*dpdr(:,nr,na) )\
@@ -222,9 +222,9 @@ begin
     end do 
     end do 
 
-  do iz = 0, n_zlevs-1,1
-  do ir = 0, n_radius,1
-  do ia = 0, n_angle_division-1
+  do iz = 0, N_ZLEVS-1,1
+  do ir = 0, N_RADIUS,1
+  do ia = 0, N_ANGLE-1
   if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
    vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
   end if
@@ -239,7 +239,7 @@ begin
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+member(mmm)+"-trackingcut_"+times(c_ttt))
+  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
   res = True
   res@gsnDraw             = False
@@ -259,18 +259,18 @@ begin
   end if
   end if
 
-  X_LABEL = (fspan( 0,((dis*0.001)*n_radius),n_radius+1))
+  X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
   Y_LABEL =  zlevs*0.001 
 
   res@tiXAxisString        = "Radius from the centre (km)"  
   res@tmXBMode = "Explicit"
-  res@tmXBValues = ispan(0,n_radius,5)
-  res@tmXBLabels = tostring(ispan(0,n_radius,5)*10)
+  res@tmXBValues = ispan(0,N_RADIUS,5)
+  res@tmXBLabels = tostring(ispan(0,N_RADIUS,5)*10)
 
   res@tiYAxisString        = "Height(km)"  
   res@tmYLMode = "Explicit"
-  res@tmYLValues = ispan(0,n_zlevs-1,10)
-  res@tmYLLabels = Y_LABEL(ispan(0,n_zlevs-1,10))
+  res@tmYLValues = ispan(0,N_ZLEVS-1,10)
+  res@tmYLLabels = Y_LABEL(ispan(0,N_ZLEVS-1,10))
   res@tmYLLabelFontHeightF = 0.02
 
   shade01_opts = True 
@@ -342,26 +342,26 @@ begin
 
    vr_dammy  = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
 
-   vr_mean  = new((/n_zlevs,n_radius+1/),"float")  
-   ww_dammy = new((/n_zlevs,n_radius+1/),"float")  
+   vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
+   ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
 
-   do nl01=0,n_zlevs-1,5
-   do nl02=0,n_radius,2
+   do nl01=0,N_ZLEVS-1,5
+   do nl02=0,N_RADIUS,2
    vr_mean(nl01,nl02) = vr_dammy(nl01,nl02)
    ww_dammy(nl01,nl02)= 0
    end do
    end do
 
   plots_vector   = gsn_csm_vector(wks01, vr_mean, ww_dammy, vector01_opts) 
-  vt_max_r = new(n_zlevs, "integer")
-  do iz =0,n_zlevs-1
+  vt_max_r = new(N_ZLEVS, "integer")
+  do iz =0,N_ZLEVS-1
   vt_max_r(iz) = maxind (vt_mean(iz,:)) 
   end do
 
    plres = True
    plres@gsLineColor               = "black"   ; Set the line color.
    plres@gsLineThicknessF          = 14.0
-   dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,n_zlevs,1), plres)
+   dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,N_ZLEVS,1), plres)
    
    overlay(plots,plots_vector)
    overlay(plots,plots_contour)
@@ -372,7 +372,7 @@ frame(wks01)
      delete(vg_d)
      delete(res)
 
-     c_ttt=c_ttt+ n_skiptime
+     c_ttt=c_ttt+ N_SKIPTIME
     end do ;;;it loop
 
   end do ; iii loop
@@ -387,7 +387,7 @@ ave_time_end = 60
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+member(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
+  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
 
   res = True
   res@gsnDraw             = False
@@ -408,17 +408,17 @@ ave_time_end = 60
   ;end if
   res@gsnRightString   = "f"+ave_time_sta+"-f"+ave_time_end
 
-  X_LABEL = (fspan( 0,((dis*0.001)*n_radius),n_radius+1))
+  X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
   Y_LABEL =  zlevs*0.001 
 
   res@tmXBMode = "Explicit"
-  res@tmXBValues = ispan(0,n_radius,5)
-  res@tmXBLabels = tostring(ispan(0,n_radius,5)*10)
+  res@tmXBValues = ispan(0,N_RADIUS,5)
+  res@tmXBLabels = tostring(ispan(0,N_RADIUS,5)*10)
 
   res@tiYAxisString        = "Height(km)"  
   res@tmYLMode = "Explicit"
-  res@tmYLValues = ispan(0,n_zlevs-1,10)
-  res@tmYLLabels = Y_LABEL(ispan(0,n_zlevs-1,10))
+  res@tmYLValues = ispan(0,N_ZLEVS-1,10)
+  res@tmYLLabels = Y_LABEL(ispan(0,N_ZLEVS-1,10))
   res@tmYLLabelFontHeightF = 0.02
 
   shade01_opts = True 
@@ -492,11 +492,11 @@ ave_time_end = 60
    vr_dammy01  = dim_avg_n(vr_cyclind(mmm,:,:,:,:),3)
    vr_dammy    = dim_avg_n(vr_dammy01(ave_time_sta:ave_time_end,:,:),0)
 
-   vr_mean  = new((/n_zlevs,n_radius+1/),"float")  
-   ww_dammy = new((/n_zlevs,n_radius+1/),"float")  
+   vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
+   ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
 
-   do nl01=0,n_zlevs-1,5
-   do nl02=0,n_radius,2
+   do nl01=0,N_ZLEVS-1,5
+   do nl02=0,N_RADIUS,2
    vr_mean(nl01,nl02) = vr_dammy(nl01,nl02)
    ww_dammy(nl01,nl02)= 0
    end do
@@ -507,7 +507,7 @@ ave_time_end = 60
    plres = True
    plres@gsLineColor               = "grey"   ; Set the line color.
    plres@gsLineThicknessF          = 14.0
-  ; dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,n_zlevs,1), plres)
+  ; dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,N_ZLEVS,1), plres)
    ;plot_dam   = gsn_csm_vector(wks01, vr_d,ww_d,vector01_opts) 
    
    overlay(plots,plots_vector)
@@ -521,7 +521,7 @@ end do ; mmm loop
 
 
 
-do it =0 ,c_ttt-1,n_skiptime 
+do it =0 ,c_ttt-1,N_SKIPTIME 
 
 ;************************************************
 ; create plot
@@ -548,18 +548,18 @@ do it =0 ,c_ttt-1,n_skiptime
   end if
   end if
 
-  X_LABEL = (fspan( 0,((dis*0.001)*n_radius),n_radius+1))
+  X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
   Y_LABEL =  zlevs*0.001 
 
   res@tiXAxisString        = "Radius from the centre (km)"  
   res@tmXBMode = "Explicit"
-  res@tmXBValues = ispan(0,n_radius,5)
-  res@tmXBLabels = tostring(ispan(0,n_radius,5)*10)
+  res@tmXBValues = ispan(0,N_RADIUS,5)
+  res@tmXBLabels = tostring(ispan(0,N_RADIUS,5)*10)
 
   res@tiYAxisString        = "Height(km)"  
   res@tmYLMode = "Explicit"
-  res@tmYLValues = ispan(0,n_zlevs-1,10)
-  res@tmYLLabels = Y_LABEL(ispan(0,n_zlevs-1,10))
+  res@tmYLValues = ispan(0,N_ZLEVS-1,10)
+  res@tmYLLabels = Y_LABEL(ispan(0,N_ZLEVS-1,10))
   res@tmYLLabelFontHeightF = 0.02
 
 
@@ -612,11 +612,11 @@ do it =0 ,c_ttt-1,n_skiptime
   dammy   = dim_avg_n(vr_cyclind(:,it,:,:,:),3)
   dammy02 = dim_avg_n(dammy,0)
 
-   vr_mean  = new((/n_zlevs,n_radius+1/),"float")  
-   ww_dammy = new((/n_zlevs,n_radius+1/),"float")  
+   vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
+   ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
 
-   do nl01=0,n_zlevs-1,5
-   do nl02=0,n_radius,2
+   do nl01=0,N_ZLEVS-1,5
+   do nl02=0,N_RADIUS,2
    vr_mean(nl01,nl02) = dammy02(nl01,nl02)
    ww_dammy(nl01,nl02)= 0
    end do
@@ -655,15 +655,15 @@ do it =0 ,c_ttt-1,n_skiptime
 
   plots_sprd    = gsn_csm_contour(wks03, vg_sprd  ,shade02_opts)
 
-  vt_max_r = new(n_zlevs, "integer")
-  do iz =0,n_zlevs-1
+  vt_max_r = new(N_ZLEVS, "integer")
+  do iz =0,N_ZLEVS-1
   vt_max_r(iz) = maxind (vt_mean(iz,:)) 
   end do
 
   plres = True
   plres@gsLineColor               = "grey"   ; Set the line color.
   plres@gsLineThicknessF          = 14.0
-  dum01 = gsn_add_polyline  (wks03, plots_sprd, vt_max_r, ispan(0,n_zlevs,1), plres)
+  dum01 = gsn_add_polyline  (wks03, plots_sprd, vt_max_r, ispan(0,N_ZLEVS,1), plres)
 
 
 draw(plots_mean)
@@ -671,13 +671,6 @@ frame(wks02)
   
 draw(plots_sprd)
 frame(wks03)  
-
-
-
-;  resP@txString       =  "Case:"+TY_NAME+", Member:"+member(mmm) \   ; use this for NCL V6.3.0 and earlier
-;                        +"~C~Initial time:"+times(0)+", Time:"+times(it)+"."
-;  resP@txFontHeightF  = 0.018
-
 
 delete(res)
 end do ; it loop
