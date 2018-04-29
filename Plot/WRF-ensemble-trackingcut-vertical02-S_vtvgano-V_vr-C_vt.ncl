@@ -11,27 +11,25 @@ begin
 
 ;********** Part - Enter Constant, Directory, NAME and so on **********
 
-  TY_NAME = "PALI"
+  TY_NAME = "PALI"          ; case name
 
   WORK = "/Volumes/RAID01"           ; WORK = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
 
-  INIT = (/"20160106"/)
+  INIT = (/"20160106"/)     ; initial time/date
    
-   MEMBER = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
+  MEMBER = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
 
-   N_SKIPTIME = 12
+  N_SKIPTIME     = 12       ; number of skip time  
 
-   RADIUS_KM      = 200 ; kilometer
-   N_RADIUS       = 25  ; number of grids
-   N_ANGLE = 36  ; number
-   DIS = 10000   ; meter
+  RADIUS_KM      = 200      ; kilometer
+  N_RADIUS       = 25       ; number of grids
+  N_ANGLE        = 36       ; number of angle
+  DIS            = 10000    ; meter
+  ZTOP           = 20000    ; meter
+  N_ZLEVS        = 101      ; number of vertical
 
-   ZTOP = 20000
-   N_ZLEVS = 101
-
-; We generate plots, but what kind do we prefer?
-   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
+  TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
 
@@ -52,7 +50,7 @@ begin
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
   do mmm = 0, n_MEMBER-1,1
-     trackdata = "/Volumes/HDD01/research/ncl/wrf/track/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
+    trackdata = TRACK_DIRC+"/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
 ;---Read in file as array of strings so we can parse each line
   lines  = asciiread(trackdata,-1,"string")
