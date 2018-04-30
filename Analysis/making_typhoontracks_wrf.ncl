@@ -12,54 +12,44 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRF_contributed.ncl"
+load "./Tools.ncl"
 begin
 ;
-; The WRF ARW input file.  
-; This needs to have a ".nc" appended, so just do it.
 
-;********** control part **********
+;********** Part - Enter Constant, Directory, NAME and so on **********
 
-   TY_NAME = "PALI"
+  TY_NAME = "PALI"
 
-   WORK = "/Volumes/RAID01"
-   dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
+  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  OUT_DIRC   = "/Volumes/HDD01/research/ncl/wrf/track/"+TY_NAME+"/"
 
-   OUT_dirc = "/Volumes/HDD01/research/ncl/wrf/track/"+TY_NAME+"/"
+  INIT  = (/"20160106"/)
 
-   init  = (/"20160106"/)
-   N_init = dimsizes(init)
+  MEMBER = (/ "c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
 
-   member = (/ "c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-   n_member    = dimsizes(member)
+ ;RULE = "01" ; 01 is  track of maximum relative voriticity on 850 hPa
+  RULE = "02" ; 02 is  track of minimum sea level pressure
 
-   ;RULE = "01" ; 01 is  track of maximum relative voriticity on 850 hPa
-    RULE = "02" ; 02 is  track of minimum sea level pressure
+  S_DIS = 15 ; search grid number from the previous point 
+  S_RAD = 10 ; parameter mean_radius grids and grids of edge
 
-   s_dis = 15 ; search grid number from the previous point 
-   s_rad = 10 ; parameter mean_radius grids and grids of edge
+;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
 
-;*************************************************************************************
-
-ret = systemfunc("test -d "+OUT_dirc+"; echo $?")
-if(ret .eq. 0) then
-print("--> "+OUT_dirc+": exists")                  ;-- do what you want to do
-else if(ret .eq.1) then
-print("--> "+OUT_dirc+": doesn't exist: create")   ;-- create the desired directory
-system("mkdir " + OUT_dirc)
-end if
-end if
+  n_INIT   = dimsizes(INIT)
+  n_MEMBER = dimsizes(MEMBER)
+  makedir(OUT_DIRC)
 
 ;*************************************************************************************
 
-  do nnn = 0,N_init-1 ; number of initial times
+  do nnn = 0,n_INIT-1 ; number of initial times
 
-  dirw = dirc + init(0) +"/"    ; input directory
-  wrflist = systemfunc("basename " + dirw + member(0) + "/wrfout*")
-  listnum = stringtointeger(systemfunc("ls -l " + dirw + member(0) + "/wrfout* | wc -l"))
+  dirw = WRF_DIRC + INIT(0) +"/"    ; input directory
+  wrflist = systemfunc("basename " + dirw + MEMBER(0) + "/wrfout*")
+  listnum = stringtointeger(systemfunc("ls -l " + dirw + MEMBER(0) + "/wrfout* | wc -l"))
 
   dtt = 0
-  dirw = dirc + init(nnn) +"/"    ; input directory
-  filw = systemfunc("ls " + dirw + member(0) + "/wrfout*")   ; or WRF_*grb
+  dirw = WRF_DIRC + INIT(nnn) +"/"    ; input directory
+  filw = systemfunc("ls " + dirw + MEMBER(0) + "/wrfout*")   ; or WRF_*grb
   f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
   ListSetType (f, "join")
 
@@ -97,16 +87,16 @@ end if
 
   stt  = 0
 
-  para01 = new ( (/n_member,n_timestep,nlat,nlon/),"float")
+  para01 = new ( (/n_MEMBER,n_timestep,nlat,nlon/),"float")
 
-  do ii = 0,n_member-1,1  ; number of members 
+  do ii = 0,n_MEMBER-1,1  ; number of MEMBERs 
 
 
 ;********************************************************
 ; Section : Reading all time steps from all wrfout files.
 ;********************************************************
 
-  filw = systemfunc("ls " + dirw + member(ii) + "/wrfout*")   ; or WRF_*grb
+  filw = systemfunc("ls " + dirw + MEMBER(ii) + "/wrfout*")   ; or WRF_*grb
   f    = addfiles (filw+".nc", "r")   ; note the "s" of addfile
   ListSetType (f, "join")
 
@@ -128,7 +118,7 @@ end if
 
   ttt = 0
 
-  do jj = 0,listnum-1 ; number of data file by one member
+  do jj = 0,listnum-1 ; number of data file by one MEMBER
  
   print("Now file is "+filw(jj))
 
@@ -174,7 +164,7 @@ end if
  lon_deg  = new((/n_timestep/),float)
  c_para   = new((/n_timestep/),float)
 
-  outfile = (OUT_dirc+"trackdata-v"+RULE+"_"+TY_NAME+"_"+init(nnn)+"_"+member(ii)+".csv")
+  outfile = (OUT_DIRC+"trackdata-v"+RULE+"_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(ii)+".csv")
 
 ret = systemfunc("test -e "+outfile+"; echo $?")
 if(ret .eq. 0) then
@@ -201,9 +191,9 @@ end if
 
             do iy = 0,nlat-1
               do ix = 0,nlon-1
-                    if(iy-s_rad.ge.0.and.iy+s_rad.le.nlat-1) then
-                    if(ix-s_rad.ge.0.and.ix+s_rad.le.nlon-1) then
-                    para_mean(iy,ix) = avg(para01(ii,it,iy-s_rad:iy+s_rad,ix-s_rad:ix+s_rad)) 
+                    if(iy-S_RAD.ge.0.and.iy+S_RAD.le.nlat-1) then
+                    if(ix-S_RAD.ge.0.and.ix+S_RAD.le.nlon-1) then
+                    para_mean(iy,ix) = avg(para01(ii,it,iy-S_RAD:iy+S_RAD,ix-S_RAD:ix+S_RAD)) 
                     else
                     para_mean(iy,ix) =  default_fillvalue("float")
                     end if
@@ -221,7 +211,7 @@ end if
                     iyy = abs(bi_lat - iy) 
                     ixx = abs(bi_lon - ix)
 
-                    if(iyy.gt.s_dis.or.ixx.gt.s_dis)then
+                    if(iyy.gt.S_DIS.or.ixx.gt.S_DIS)then
                     delete(para_mean(iy,ix))
                     para_mean(iy,ix) =  default_fillvalue("float")
                     end if 
@@ -237,7 +227,7 @@ end if
 
      if (CHECK_FLAG.eq.0)then
 
-             if(ilat.ge.s_rad-1.and.ilat.le.nlat-s_rad-1.and.ilon.ge.s_rad-1.and.ilon.le.nlon-s_rad-1)then
+             if(ilat.ge.S_RAD-1.and.ilat.le.nlat-S_RAD-1.and.ilon.ge.S_RAD-1.and.ilon.le.nlon-S_RAD-1)then
 
               lat_num(it) = ilat
               lon_num(it) = ilon
@@ -286,7 +276,7 @@ end if
                     iyy = abs(bi_lat - iy) 
                     ixx = abs(bi_lon - ix)
 
-                    if(iyy.gt.s_dis.or.ixx.gt.s_dis)then
+                    if(iyy.gt.S_DIS.or.ixx.gt.S_DIS)then
                     delete(para_dam(iy,ix))
                     para_dam(iy,ix) =  default_fillvalue("float")
                     end if 
@@ -302,7 +292,7 @@ end if
 
      if (CHECK_FLAG.eq.0)then
 
-             if(ilat.ge.s_rad-1.and.ilat.le.nlat-s_rad-1.and.ilon.ge.s_rad-1.and.ilon.le.nlon-s_rad-1)then
+             if(ilat.ge.S_RAD-1.and.ilat.le.nlat-S_RAD-1.and.ilon.ge.S_RAD-1.and.ilon.le.nlon-S_RAD-1)then
 
               lat_num(it) = ilat
               lon_num(it) = ilon
