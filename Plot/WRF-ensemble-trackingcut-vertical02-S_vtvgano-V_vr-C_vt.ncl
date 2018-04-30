@@ -173,59 +173,59 @@ begin
       tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
       rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )    ; density => kg/m3
 
-    do nr = 0,N_RADIUS,1
-    do na = 0,N_ANGLE-1
+      do nr = 0,N_RADIUS,1
+        do na = 0,N_ANGLE-1
 
-    Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-    Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
+        Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
+        Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
   
-    X1=floattointeger(Cylind_x(nr,na))
-    X2=X1+1
-    Y1=floattointeger(Cylind_y(nr,na))
-    Y2=Y1+1
-    DX=abs(Cylind_x(nr,na)-X1)
-    DY=abs(Cylind_y(nr,na)-Y1)
+        X1=floattointeger(Cylind_x(nr,na))
+        X2=X1+1
+        Y1=floattointeger(Cylind_y(nr,na))
+        Y2=Y1+1
+        DX=abs(Cylind_x(nr,na)-X1)
+        DY=abs(Cylind_y(nr,na)-Y1)
 
-    if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
-      vt_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vt_levs(c_ttt,:,Y1,X1) + DY*vt_levs(c_ttt,:,Y2,X1) )   \
-                                        + DX*((1-DY)*vt_levs(c_ttt,:,Y1,X2) + DY*vt_levs(c_ttt,:,Y2,X2) )
-      vr_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vr_levs(c_ttt,:,Y1,X1) + DY*vr_levs(c_ttt,:,Y2,X1) )   \
-                                        + DX*((1-DY)*vr_levs(c_ttt,:,Y1,X2) + DY*vr_levs(c_ttt,:,Y2,X2) )
-      pp_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*pp_levs(c_ttt,:,Y1,X1) + DY*pp_levs(c_ttt,:,Y2,X1) )   \
-                                        + DX*((1-DY)*pp_levs(c_ttt,:,Y1,X2) + DY*pp_levs(c_ttt,:,Y2,X2) )
-      rho_cyclind(mmm,c_ttt,:,nr,na) = (1-DX)*( (1-DY)*rho_levs(c_ttt,:,Y1,X1) + DY*rho_levs(c_ttt,:,Y2,X1) )   \
-                                        + DX*((1-DY)*rho_levs(c_ttt,:,Y1,X2) + DY*rho_levs(c_ttt,:,Y2,X2) )
-      ff_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*ff(Y1,X1) + DY*ff(Y2,X1) )   \
-                                        + DX*((1-DY)*ff(Y1,X2) + DY*ff(Y2,X2) )
-    else
-      vt_cyclind(mmm,c_ttt,:,nr,na)  = vt_cyclind@_FillValue
-      vr_cyclind(mmm,c_ttt,:,nr,na)  = vr_cyclind@_FillValue
-      pp_cyclind(mmm,c_ttt,:,nr,na)  = pp_cyclind@_FillValue
-      rho_cyclind(mmm,c_ttt,:,nr,na) = rho_cyclind@_FillValue
-      ff_cyclind(mmm,c_ttt,:,nr,na)  = ff_cyclind@_FillValue
-    end if
+        if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
+        vt_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vt_levs(c_ttt,:,Y1,X1) + DY*vt_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*vt_levs(c_ttt,:,Y1,X2) + DY*vt_levs(c_ttt,:,Y2,X2) )
+        vr_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vr_levs(c_ttt,:,Y1,X1) + DY*vr_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*vr_levs(c_ttt,:,Y1,X2) + DY*vr_levs(c_ttt,:,Y2,X2) )
+        pp_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*pp_levs(c_ttt,:,Y1,X1) + DY*pp_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*pp_levs(c_ttt,:,Y1,X2) + DY*pp_levs(c_ttt,:,Y2,X2) )
+        rho_cyclind(mmm,c_ttt,:,nr,na) = (1-DX)*( (1-DY)*rho_levs(c_ttt,:,Y1,X1) + DY*rho_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*rho_levs(c_ttt,:,Y1,X2) + DY*rho_levs(c_ttt,:,Y2,X2) )
+        ff_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*ff(Y1,X1) + DY*ff(Y2,X1) )   \
+                                          + DX*((1-DY)*ff(Y1,X2) + DY*ff(Y2,X2) )
+        else
+        vt_cyclind(mmm,c_ttt,:,nr,na)  = vt_cyclind@_FillValue
+        vr_cyclind(mmm,c_ttt,:,nr,na)  = vr_cyclind@_FillValue
+        pp_cyclind(mmm,c_ttt,:,nr,na)  = pp_cyclind@_FillValue
+        rho_cyclind(mmm,c_ttt,:,nr,na) = rho_cyclind@_FillValue
+        ff_cyclind(mmm,c_ttt,:,nr,na)  = ff_cyclind@_FillValue
+        end if
     
-    end do ; na loop
-    end do ; nr loop
+        end do ; na loop
+      end do ; nr loop
 
       dpdr =  new( (/N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
-      dpdr = (center_fINITe_diff_n (pp_cyclind(mmm,c_ttt,:,:,:),DIS,False,0,1))*100
+      dpdr = (center_finite_diff_n(pp_cyclind(mmm,c_ttt,:,:,:),DIS,False,0,1))*100
 
-    do nr=0,N_RADIUS,1
+      do nr=0,N_RADIUS,1
       RR = DIS*nr
-    do na = 0, N_ANGLE-1
-          vg_cyclind(mmm,c_ttt,:,nr,na)  =  0.5*( \
+        do na = 0, N_ANGLE-1
+        vg_cyclind(mmm,c_ttt,:,nr,na)  =  0.5*( \
                                             -1*ff_cyclind(mmm,c_ttt,:,nr,na) *RR \
                                             +sqrt( (ff_cyclind(mmm,c_ttt,:,nr,na)*RR)^2 +(4*RR/rho_cyclind(mmm,c_ttt,:,nr,na))*dpdr(:,nr,na) )\
                                             ) 
-    end do 
-    end do 
+        end do 
+      end do 
 
     do iz = 0, N_ZLEVS-1,1
     do ir = 0, N_RADIUS,1
     do ia = 0, N_ANGLE-1
     if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
-     vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(TYPEof(vg_cyclind))
+     vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
     end if
     end do
     end do
@@ -330,45 +330,49 @@ begin
   vector01_opts@vcRefAnnoOrthogonalPosF   =  -0.075
   vector01_opts@vcRefAnnoBackgroundColor  = "plum1"
 
-   vr_dammy  = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
+  vr_dammy  = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
 
-   vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
-   ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
+  vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
+  ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
 
    do nl01=0,N_ZLEVS-1,5
-   do nl02=0,N_RADIUS,2
-   vr_mean(nl01,nl02) = vr_dammy(nl01,nl02)
-   ww_dammy(nl01,nl02)= 0
-   end do
+     do nl02=0,N_RADIUS,2
+     vr_mean(nl01,nl02) = vr_dammy(nl01,nl02)
+     ww_dammy(nl01,nl02)= 0
+     end do
    end do
 
   plots_vector   = gsn_csm_vector(wks01, vr_mean, ww_dammy, vector01_opts) 
   vt_max_r = new(N_ZLEVS, "integer")
-  do iz =0,N_ZLEVS-1
-  vt_max_r(iz) = maxind (vt_mean(iz,:)) 
-  end do
+  
+    do iz =0,N_ZLEVS-1
+    vt_max_r(iz) = maxind (vt_mean(iz,:)) 
+    end do
 
-   plres = True
-   plres@gsLineColor               = "black"   ; Set the line color.
-   plres@gsLineThicknessF          = 14.0
-   dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,N_ZLEVS,1), plres)
+  plres = True
+  plres@gsLineColor               = "black"   ; Set the line color.
+  plres@gsLineThicknessF          = 14.0
+  dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,N_ZLEVS,1), plres)
    
-   overlay(plots,plots_vector)
-   overlay(plots,plots_contour)
+  overlay(plots,plots_vector)
+  overlay(plots,plots_contour)
 
-draw(plots)
-frame(wks01)  
+  draw(plots)
+  frame(wks01)  
 
-     delete(vg_d)
-     delete(res)
+  delete(vg_d)
+  delete(res)
 
-     c_ttt=c_ttt+ N_SKIPTIME
-    end do ;;;it loop
+  c_ttt=c_ttt+ N_SKIPTIME
+  
+  end do ;;;it loop
 
   end do ; iii loop
 
   delete(timesd)
 
+
+exit
 
 ave_time_sta = 12
 ave_time_end = 60
@@ -387,15 +391,6 @@ ave_time_end = 60
   res@vpHeightF           = 0.60
   res@gsnLeftString       = ""
 
-  ;if(c_ttt.lt.10)then
-  ;res@gsnRightString   = "f00"+c_ttt
-  ;else if (c_ttt.ge.10.and.c_ttt.lt.100)then
-  ;res@gsnRightString   = "f0"+c_ttt
-  ;else if (c_ttt.ge.100)then
-  ;res@gsnRightString   = "f"+c_ttt
-  ;end if 
-  ;end if
-  ;end if
   res@gsnRightString   = "f"+ave_time_sta+"-f"+ave_time_end
 
   X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
