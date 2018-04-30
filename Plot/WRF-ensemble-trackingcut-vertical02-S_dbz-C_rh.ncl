@@ -188,7 +188,7 @@ exit
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(TYPE,"./WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
+  wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
   res = True
   res@gsnDraw             = False
