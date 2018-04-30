@@ -3,10 +3,21 @@
 ; History:
 ; //2018 - Released
 ;
-; contains: 
+; contains:ReadTrackDataCSV 
 ;
 
 ; ====================================================================================================
+
+
+undef ( "ReadTrackDataCSV" )
+function rectangular2polar (  \
+  path[*]           : string \
+)
+
+local None
+
+begin
+
 
 undef ( "rectangular2polar" )
 function rectangular2polar (  \
@@ -46,4 +57,4 @@ begin
     end do ; na loop
     end do ; nr loop
 
-
+end
