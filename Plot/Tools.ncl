@@ -5,6 +5,10 @@
 ;
 ; contains: makedir
 ;
+; makedir
+; Usage: makedir(path)
+; path (string): path of directory to want to make now.
+; e.g. makedir("~/HOGE/HOGEHOGE/HOGEHOGE")
 ; ====================================================================================================
 
 undef ( "makedir" )
