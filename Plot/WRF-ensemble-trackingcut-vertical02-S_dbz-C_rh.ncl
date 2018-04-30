@@ -4,6 +4,7 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
 load "./radialAvg.ncl"
+load "./Tools.ncl"
 begin
 ;
 ; The WRF ARW input file.  
@@ -15,6 +16,7 @@ begin
 
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
+  TRACK_VER  = "v25"
   OUT_DIRC   = "/Volumes/HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
 
   INIT = (/"20160106"/)     ; initial time/date
@@ -34,20 +36,11 @@ begin
 
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
-   ;dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
-   n_INIT = dimsizes(INIT)
-   n_MEMBER = dimsizes(MEMBER)
-   zlevs = fspan(0,ZTOP,N_ZLEVS)
-   zlevs!0 = "lev"
-
-;********** Part - mkdir directory test **********
-
-
-
-
-
-exit
-
+  n_INIT   = dimsizes(INIT)
+  n_MEMBER = dimsizes(MEMBER)
+  zlevs    = fspan(0,ZTOP,N_ZLEVS)
+  zlevs!0  = "lev"
+  makedir(OUT_DIRC)
 
 ;*************************************************************************************
 
