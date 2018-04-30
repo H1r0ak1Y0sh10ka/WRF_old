@@ -46,12 +46,13 @@ begin
 
   do nnn = 0,n_INIT-1
 
-  dirw = dirc + INIT(nnn) + "/???/"    ; input directory
-  cccc = dirc + INIT(nnn) + "/c00/"    ; input directory
+  dirw = WRF_DIRC + INIT(nnn) + "/???/"    ; input directory
+  cccc = WRF_DIRC + INIT(nnn) + "/c00/"    ; input directory
   wrflist = systemfunc("basename " + cccc +"wrfout*")
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
     do mmm = 0, n_MEMBER-1,1
+
     trackdata = TRACK_DIRC+"/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
 
@@ -102,29 +103,19 @@ begin
   
     n_timestep=0
 
-    do iii = 0,listnum-1,1
-    dtimes = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
-    n_times = count_unique_values(dtimes) ; number of times in the file 
-    n_timestep=n_timestep+n_times
-    end do ; iii loop
+      do iii = 0,listnum-1,1
+      dtimes = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
+      n_times = count_unique_values(dtimes) ; number of times in the file 
+      n_timestep=n_timestep+n_times
+      end do ; iii loop
 
     times      = new ( (/n_timestep/),"string")
-    uu         = new ( (/nz,nlat,nlon/),"float")
-    vv         = new ( (/nz,nlat,nlon/),"float")
+    dbz        = new ( (/nz,nlat,nlon/),"float")
     zz         = new ( (/nz,nlat,nlon/),"float")
-    pp         = new ( (/nz,nlat,nlon/),"float")
-    tk         = new ( (/nz,nlat,nlon/),"float")
-    div        = new ( (/nz,nlat,nlon/),"float")
-    vt         = new ( (/nz,nlat,nlon/),"float")
-    vr         = new ( (/nz,nlat,nlon/),"float")
+    rh         = new ( (/nz,nlat,nlon/),"float")
 
-    div_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    vt_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    vr_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    pp_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    tk_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    rho_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    rgas       = 287.058                        ; J/(kg-K) => m2/(s2 K)
+    dbz_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
+    rh_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
 
     if(mmm.eq.0)then
 ;;;;;; ento zahyo junbi ;;;;;;;;
@@ -137,104 +128,61 @@ begin
     Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
     Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
 
-    vt_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    vr_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    pp_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    ff_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    vg_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    rho_cyclind    =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")    
-    do na = 0,N_ANGLE-1
-    Angle=angle_div_deg*int2flt(na)
-    angle_phi(na)=pi*(Angle/180.0)
-    end do
+    dbz_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rh_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+
+      do na = 0,N_ANGLE-1
+      Angle=angle_div_deg*int2flt(na)
+      angle_phi(na)=pi*(Angle/180.0)
+      end do
 ;;;;;;;;;;;;;;;;;;;;;;;;
     end if
 
     c_ttt=0
 
-    do iii =0,listnum-1,1
-    print("Now reading file is "+filw(iii))
-
-    timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
-    n_times = count_unique_values(timesd) ; number of times in the file 
-
-      do it = 0,n_times-1, N_SKIPTIME
-      times(c_ttt)     = timesd(it)                             ; get all times in the file
-      uu(:,:,:)  = wrf_user_getvar(f[iii],"ua",it)        ; u averaged to mass points
-      vv(:,:,:)  = wrf_user_getvar(f[iii],"va",it)        ; v averaged to mass points
-      zz(:,:,:)  = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-      pp(:,:,:)  = wrf_user_getvar(f[iii],"pressure",it)  ; pressure is our vertical coordinate
-      tk(:,:,:)  = wrf_user_getvar(f[iii],"tk",it)        ; tk is our vertical coordinate
-
-      vComps = calcWindComponents(uu(:,:,:),vv(:,:,:),lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
-      vt(:,:,:) = vComps[1]
-      vr(:,:,:) = vComps[0]
-      delete(vComps)
-      vt_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vt(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-      vr_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-      pp_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-      tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-      rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )    ; density => kg/m3
-
-      do nr = 0,N_RADIUS,1
-        do na = 0,N_ANGLE-1
-
-        Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-        Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
-  
-        X1=floattointeger(Cylind_x(nr,na))
-        X2=X1+1
-        Y1=floattointeger(Cylind_y(nr,na))
-        Y2=Y1+1
-        DX=abs(Cylind_x(nr,na)-X1)
-        DY=abs(Cylind_y(nr,na)-Y1)
-
-        if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
-        vt_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vt_levs(c_ttt,:,Y1,X1) + DY*vt_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*vt_levs(c_ttt,:,Y1,X2) + DY*vt_levs(c_ttt,:,Y2,X2) )
-        vr_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*vr_levs(c_ttt,:,Y1,X1) + DY*vr_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*vr_levs(c_ttt,:,Y1,X2) + DY*vr_levs(c_ttt,:,Y2,X2) )
-        pp_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*pp_levs(c_ttt,:,Y1,X1) + DY*pp_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*pp_levs(c_ttt,:,Y1,X2) + DY*pp_levs(c_ttt,:,Y2,X2) )
-        rho_cyclind(mmm,c_ttt,:,nr,na) = (1-DX)*( (1-DY)*rho_levs(c_ttt,:,Y1,X1) + DY*rho_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*rho_levs(c_ttt,:,Y1,X2) + DY*rho_levs(c_ttt,:,Y2,X2) )
-        ff_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*ff(Y1,X1) + DY*ff(Y2,X1) )   \
-                                          + DX*((1-DY)*ff(Y1,X2) + DY*ff(Y2,X2) )
-        else
-        vt_cyclind(mmm,c_ttt,:,nr,na)  = vt_cyclind@_FillValue
-        vr_cyclind(mmm,c_ttt,:,nr,na)  = vr_cyclind@_FillValue
-        pp_cyclind(mmm,c_ttt,:,nr,na)  = pp_cyclind@_FillValue
-        rho_cyclind(mmm,c_ttt,:,nr,na) = rho_cyclind@_FillValue
-        ff_cyclind(mmm,c_ttt,:,nr,na)  = ff_cyclind@_FillValue
-        end if
+      do iii =0,listnum-1,1
     
-        end do ; na loop
-      end do ; nr loop
+      print("Now reading file is "+filw(iii))
 
-      dpdr =  new( (/N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
-      dpdr = (center_finite_diff_n(pp_cyclind(mmm,c_ttt,:,:,:),DIS,False,0,1))*100
+      timesd = wrf_user_getvar(f[iii],"times",-1)  ; get all times in the file
+      n_times = count_unique_values(timesd) ; number of times in the file 
 
-      do nr=0,N_RADIUS,1
-      RR = DIS*nr
-        do na = 0, N_ANGLE-1
-        vg_cyclind(mmm,c_ttt,:,nr,na)  =  0.5*( \
-                                            -1*ff_cyclind(mmm,c_ttt,:,nr,na) *RR \
-                                            +sqrt( (ff_cyclind(mmm,c_ttt,:,nr,na)*RR)^2 +(4*RR/rho_cyclind(mmm,c_ttt,:,nr,na))*dpdr(:,nr,na) )\
-                                            ) 
-        end do 
-      end do 
+        do it = 0,n_times-1, N_SKIPTIME
+        times(c_ttt) = timesd(it)                             ; get all times in the file
+        dbz(:,:,:)   = wrf_user_getvar(f[iii],"dbz",it)        ; dbz
+        rh(:,:,:)    = wrf_user_getvar(f[iii],"rh",it)        ; rh
+        zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
+      
+        dbz_levs(c_ttt,:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        rh_levs(c_ttt,:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
 
-    do iz = 0, N_ZLEVS-1,1
-    do ir = 0, N_RADIUS,1
-    do ia = 0, N_ANGLE-1
-    if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
-     vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
-    end if
-    end do
-    end do
-    end do
+          do nr = 0,N_RADIUS,1
+            do na = 0,N_ANGLE-1
 
+            Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
+            Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
+  
+            X1=floattointeger(Cylind_x(nr,na))
+            X2=X1+1
+            Y1=floattointeger(Cylind_y(nr,na))
+            Y2=Y1+1
+            DX=abs(Cylind_x(nr,na)-X1)
+            DY=abs(Cylind_y(nr,na)-Y1)
 
+            if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
+            dbz_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*dbz_levs(c_ttt,:,Y1,X1) + DY*dbz_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*dbz_levs(c_ttt,:,Y1,X2) + DY*dbz_levs(c_ttt,:,Y2,X2) )
+            rh_cyclind(mmm,c_ttt,:,nr,na)   = (1-DX)*( (1-DY)*rh_levs(c_ttt,:,Y1,X1) + DY*rh_levs(c_ttt,:,Y2,X1) )   \
+                                          + DX*((1-DY)*rh_levs(c_ttt,:,Y1,X2) + DY*rh_levs(c_ttt,:,Y2,X2) )
+            else
+            dbz_cyclind(mmm,c_ttt,:,nr,na) = dbz_cyclind@_FillValue
+            rh_cyclind(mmm,c_ttt,:,nr,na)  = rh_cyclind@_FillValue
+            end if
+    
+            end do ; na loop
+          end do ; nr loop
+
+exit
   print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot
