@@ -15,7 +15,7 @@ function rectangular2polar (  \
 )
 
 local None
-
+return( [/ v_rad, v_theta /] )
 begin
 
 
