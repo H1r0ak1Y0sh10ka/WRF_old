@@ -189,9 +189,9 @@ begin
 ; Set some basic resources
   wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
-  res = True
-  res@gsnDraw             = False
-  res@gsnFrame            = False
+    res = True
+    res@gsnDraw             = False
+    res@gsnFrame            = False
   res@gsnMaximize         = True
   res@vpWidthF            = 0.60
   res@vpHeightF           = 0.60
