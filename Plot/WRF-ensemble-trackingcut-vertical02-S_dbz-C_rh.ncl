@@ -187,25 +187,27 @@ begin
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
+
+  if(c_ttt.lt.10)then
+  ft_time = "f00"+c_ttt
+  else if (c_ttt.ge.10.and.c_ttt.lt.100)then
+  ft_time   = "f0"+c_ttt
+  else if (c_ttt.ge.100)then
+  ft_time   = "f"+c_ttt
+  end if 
+  end if
+  end if
+
+    wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-"+TY_NAME+"-"+INIT(nnn)+"-"+ft_time+"-"+times(c_ttt))
 
     res = True
     res@gsnDraw             = False
     res@gsnFrame            = False
-  res@gsnMaximize         = True
-  res@vpWidthF            = 0.60
-  res@vpHeightF           = 0.60
-  res@gsnLeftString       = times(c_ttt)
-
-  if(c_ttt.lt.10)then
-  res@gsnRightString   = "f00"+c_ttt
-  else if (c_ttt.ge.10.and.c_ttt.lt.100)then
-  res@gsnRightString   = "f0"+c_ttt
-  else if (c_ttt.ge.100)then
-  res@gsnRightString   = "f"+c_ttt
-  end if 
-  end if
-  end if
+    res@gsnMaximize         = True
+    res@vpWidthF            = 0.60
+    res@vpHeightF           = 0.60
+    res@gsnLeftString       = times(c_ttt)
+    res@gsnRightString      = ft_time
 
   X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
   Y_LABEL =  zlevs*0.001 
