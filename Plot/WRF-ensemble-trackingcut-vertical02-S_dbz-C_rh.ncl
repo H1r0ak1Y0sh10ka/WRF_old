@@ -14,10 +14,10 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
-  TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
+  WRF_DIRC   = "/Volumes/Yoshi-HDD01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   = "/Volumes/HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   = "/Volumes/Yoshi-HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
 
   INIT = (/"20160106"/)     ; initial time/date
    
