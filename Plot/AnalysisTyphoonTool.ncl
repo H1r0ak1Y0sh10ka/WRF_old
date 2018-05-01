@@ -21,49 +21,52 @@
 
 undef ( "rectangular2polar" )
 function rectangular2polar (  \
-  data[*][*][*]
-  nlat[*]           : numeric, \
-  nlon[*]           : numeric, \
-  nangle[*]         : numeric, \
+  data[*][*][*]      : numeric, \
+  N_LAT[*]           : numeric, \
+  N_LON[*]           : numeric, \
+  N_ANGLE[*]         : numeric, \
 )
-local None
-
+local none
 begin
 
-angle_div_deg = 360.0/int2flt(N_ANGLE)
+
 angle_phi     = new ( (/N_ANGLE/),"float")
+cylind_x      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
+cylind_y      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
+data_cyclind  = new( (/dimsizes(data(:,0,0),N_RADIUS+1,N_ANGLE/),"float") 
+
+angle_div_deg = 360.0/int2flt(N_ANGLE)
 pi            = 4.0*atan(1.0) 
 
-angle_phi     = new ( (/N_ANGLE/),"float")
-Cylind_x      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-Cylind_y      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-
   do na = 0,N_ANGLE-1
-  Angle=angle_div_deg*int2flt(na)
-  angle_phi(na)=pi*(Angle/180.0)
+  angle=angle_div_deg*int2flt(na)
+  angle_phi(na)=pi*(angle/180.0)
   end do
 
     do nr = 0,N_RADIUS,1
       do na = 0,N_ANGLE-1
 
-      Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-      Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
+      cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
+      cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
   
-      X1=floattointeger(Cylind_x(nr,na))
+      X1=floattointeger(cylind_x(nr,na))
       X2=X1+1
-      Y1=floattointeger(Cylind_y(nr,na))
+      Y1=floattointeger(cylind_y(nr,na))
       Y2=Y1+1
-      DX=abs(Cylind_x(nr,na)-X1)
-      DY=abs(Cylind_y(nr,na)-Y1)
+      DX=abs(cylind_x(nr,na)-X1)
+      DY=abs(cylind_y(nr,na)-Y1)
 
       if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
-      rho_cyclind(mmm,c_ttt,:,nr,na) = (1-DX)*( (1-DY)*rho_levs(c_ttt,:,Y1,X1) + DY*rho_levs(c_ttt,:,Y2,X1) )   \
-                                        + DX*((1-DY)*rho_levs(c_ttt,:,Y1,X2) + DY*rho_levs(c_ttt,:,Y2,X2) )
+      data_cyclind(:,nr,na) = (1-DX)*( (1-DY)*data(:,Y1,X1) + DY*data(:,Y2,X1) )   \
+                                        + DX*((1-DY)*data(:,Y1,X2) + DY*data(:,Y2,X2) )
       else
-      rho_cyclind(mmm,c_ttt,:,nr,na) = rho_cyclind@_FillValue
+      data_cyclind(mmm,c_ttt,:,nr,na) = data_cyclind@_FillValue
       end if
     
       end do ; na loop
     end do ; nr loop
+    
+data_cyclind@units = data@units
+return( [/ data_cyclind /] )
 
 end

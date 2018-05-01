@@ -6,24 +6,24 @@
 ; contains: makedir
 ;
 ; makedir
-; Usage: makedir(path)
-; path (string): path of directory to want to make now.
+; Usage: makedir(PATH)
+; PATH (string): PATH of directory to want to make now.
 ; e.g. makedir("~/HOGE/HOGEHOGE/HOGEHOGE")
 ; ====================================================================================================
 
 undef ( "makedir" )
 procedure makedir (  \
-  path[*]           : string \
+  PATH[*]           : string \
   )
 local ret
 begin
 
-ret = systemfunc("test -d " + path + "; echo $?")
+ret = systemfunc("test -d " + PATH + "; echo $?")
 if(ret .eq. 0) then
-print("--> "+ path +": exists")                  ;-- do what you want to do
+print("--> "+ PATH +": exists")                  ;-- do what you want to do
 else if(ret .eq.1) then
-print("--> "+ path +": doesn't exist: create")   ;-- create the desired directory
-system("mkdir -p " + path)
+print("--> "+ PATH +": doesn't exist: create")   ;-- create the desired directory
+system("mkdir -p " + PATH)
 end if
 end if
 
