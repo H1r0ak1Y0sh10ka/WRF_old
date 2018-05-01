@@ -245,7 +245,7 @@ begin
   contour01_opts = True 
   contour01_opts = res
 
-  contour01_opts@cnLineColor           = "green"   ; Set the line color
+  contour01_opts@cnLineColor           = "black"   ; Set the line color
   contour01_opts@cnInfoLabelOn         = False  
   contour01_opts@cnLineThicknessF      =  12
   contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
