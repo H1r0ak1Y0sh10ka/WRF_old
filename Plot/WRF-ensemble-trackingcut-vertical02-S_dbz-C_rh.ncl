@@ -182,13 +182,12 @@ begin
             end do ; na loop
           end do ; nr loop
 
-exit
   print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(TYPE,"./WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
+  wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
   res = True
   res@gsnDraw             = False
@@ -235,18 +234,18 @@ exit
   shade01_opts@lbTitleAngleF        = 90.                               ; title angle
   shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
 
-  shade01_opts@cnFillPalette = "hotcold_18lev"
+  shade01_opts@cnFillPalette         = "prcp_1"
   shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  shade01_opts@cnMinLevelValF       =     -10              ; set min contour level
-  shade01_opts@cnMaxLevelValF       =      10              ; set max contour level
-  shade01_opts@cnLevelSpacingF      =       2              ; set contour spacing
+  shade01_opts@cnMinLevelValF       =       5              ; set min contour level
+  shade01_opts@cnMaxLevelValF       =      55              ; set max contour level
+  shade01_opts@cnLevelSpacingF      =       5              ; set contour spacing
 
-  vg_d  = dim_avg_n(vg_cyclind(mmm,c_ttt,:,:,:),2)
+  shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
 
   contour01_opts = True 
   contour01_opts = res
 
-  contour01_opts@cnLineColor           = "green"   ; Set the line color
+  contour01_opts@cnLineColor           = "black"   ; Set the line color
   contour01_opts@cnInfoLabelOn         = False  
   contour01_opts@cnLineThicknessF      =  12
   contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
@@ -254,69 +253,23 @@ exit
   contour01_opts@cnLineLabelFontHeightF        = 0.025
 
   contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  contour01_opts@cnMinLevelValF       =       5                ; set min contour level
-  contour01_opts@cnMaxLevelValF       =      45                ; set max contour level
-  contour01_opts@cnLevelSpacingF      =       5                ; set contour spacing
+  contour01_opts@cnMinLevelValF       =      10                ; set min contour level
+  contour01_opts@cnMaxLevelValF       =      90                ; set max contour level
+  contour01_opts@cnLevelSpacingF      =      10                ; set contour spacing
 
-   vt_mean  = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2) 
+   contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2) 
 
-   plots         = gsn_csm_contour(wks01, (vt_mean-vg_d)  ,shade01_opts)
-   plots_contour = gsn_csm_contour(wks01, vt_mean,contour01_opts)
+   plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+   plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+   overlay(plots,plots_contour)
 
-  vector01_opts = True 
-  vector01_opts = res
-
-  vector01_opts@vcGlyphStyle           = "FillArrow"
-  vector01_opts@vcFillArrowsOn           = True
-  vector01_opts@vcFillArrowEdgeColor     = "black"
-  vector01_opts@vcFillArrowEdgeColor     = "white"
-  vector01_opts@vcLineArrowThicknessF    = 5
-  vector01_opts@vcMinDistanceF           = 0.01
-  vector01_opts@vcRefLengthF             = 0.06
-  vector01_opts@vcRefMagnitudeF          = 7.5 
-  vector01_opts@vcRefAnnoString1         = "10"
-  vector01_opts@vcRefAnnoSide            = "Left"
-  vector01_opts@vcRefAnnoString2On       = False
-  vector01_opts@vcRefAnnoPerimOn         = False
-  vector01_opts@vcRefAnnoOrthogonalPosF   =  -0.075
-  vector01_opts@vcRefAnnoBackgroundColor  = "plum1"
-
-  vr_dammy  = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
-
-  vr_mean  = new((/N_ZLEVS,N_RADIUS+1/),"float")  
-  ww_dammy = new((/N_ZLEVS,N_RADIUS+1/),"float")  
-
-   do nl01=0,N_ZLEVS-1,5
-     do nl02=0,N_RADIUS,2
-     vr_mean(nl01,nl02) = vr_dammy(nl01,nl02)
-     ww_dammy(nl01,nl02)= 0
-     end do
-   end do
-
-  plots_vector   = gsn_csm_vector(wks01, vr_mean, ww_dammy, vector01_opts) 
-  vt_max_r = new(N_ZLEVS, "integer")
-  
-    do iz =0,N_ZLEVS-1
-    vt_max_r(iz) = maxind (vt_mean(iz,:)) 
-    end do
-
-  plres = True
-  plres@gsLineColor               = "black"   ; Set the line color.
-  plres@gsLineThicknessF          = 14.0
-  dum01 = gsn_add_polyline  (wks01, plots, vt_max_r, ispan(0,N_ZLEVS,1), plres)
-   
-  overlay(plots,plots_vector)
-  overlay(plots,plots_contour)
 
   draw(plots)
   frame(wks01)  
 
-  delete(vg_d)
-  delete(res)
-
   c_ttt=c_ttt+ N_SKIPTIME
   
-  end do ;;;it loop
+    end do ;;;it loop
 
   end do ; iii loop
 
@@ -327,9 +280,6 @@ exit
 
    
 end do ; mmm loop
-
-
-
 end do ; nnn loop
 
 
