@@ -182,106 +182,100 @@ begin
             end do ; na loop
           end do ; nr loop
 
-  print("Now drawing time is "+times(c_ttt))
+    print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
 
-  if(c_ttt.lt.10)then
-  ft_time = "f00"+c_ttt
-  else if (c_ttt.ge.10.and.c_ttt.lt.100)then
-  ft_time   = "f0"+c_ttt
-  else if (c_ttt.ge.100)then
-  ft_time   = "f"+c_ttt
-  end if 
-  end if
-  end if
+    if(c_ttt.lt.10)then
+    ft_time = "f00"+c_ttt
+    else if (c_ttt.ge.10.and.c_ttt.lt.100)then
+    ft_time   = "f0"+c_ttt
+    else if (c_ttt.ge.100)then
+    ft_time   = "f"+c_ttt
+    end if 
+    end if
+    end if
 
-    wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-"+TY_NAME+"-"+INIT(nnn)+"-"+ft_time+"-"+times(c_ttt))
+      wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-"+TY_NAME+"-"+INIT(nnn)+"-"+ft_time+"-"+times(c_ttt))
 
-    res = True
-    res@gsnDraw             = False
-    res@gsnFrame            = False
-    res@gsnMaximize         = True
-    res@vpWidthF            = 0.60
-    res@vpHeightF           = 0.60
-    res@gsnLeftString       = times(c_ttt)
-    res@gsnRightString      = ft_time
+      res = True
+      res@gsnDraw             = False
+      res@gsnFrame            = False
+      res@gsnMaximize         = True
+      res@vpWidthF            = 0.60
+      res@vpHeightF           = 0.60
+      res@gsnLeftString       = times(c_ttt)
+      res@gsnRightString      = ft_time
 
-    X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
-    Y_LABEL =  zlevs*0.001 
+      ;X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
+      Y_LABEL =  zlevs*0.001 
 
-    res@tiXAxisString       = "Radius from the centre (km)"  
-    res@tmXBMode            = "Explicit"
-    res@tmXBValues          = ispan(0,N_RADIUS,5)
-    res@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+      res@tiXAxisString       = "Radius from the centre (km)"  
+      res@tmXBMode            = "Explicit"
+      res@tmXBValues          = ispan(0,N_RADIUS,5)
+      res@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
 
-    res@tiYAxisString       = "Height(km)"  
-    res@tmYLMode            = "Explicit"
-    res@tmYLValues          = ispan(0,N_ZLEVS-1,10)
-    res@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
-    res@tmYLLabelFontHeightF= 0.02
+      res@tiYAxisString       = "Height(km)"  
+      res@tmYLMode            = "Explicit"
+      res@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+      res@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+      res@tmYLLabelFontHeightF= 0.02
 
-    shade01_opts = True 
-    shade01_opts = res
+      shade01_opts = True 
+      shade01_opts = res
 
-    shade01_opts@cnFillOn             = True                   ; turn on color
-    shade01_opts@lbLabelAutoStride    = True                   ; nice label bar labels
-    shade01_opts@cnLinesOn            = False                  ; no contour lines
+      shade01_opts@cnFillOn             = True                   ; turn on color
+      shade01_opts@lbLabelAutoStride    = True                   ; nice label bar labels
+      shade01_opts@cnLinesOn            = False                  ; no contour lines
 
-    shade01_opts@lbOrientation        = "vertical"
-    shade01_opts@lbTitlePosition      = "Right"                           ; title location
-    shade01_opts@lbTitleDirection     = "Across"                          ; letter angle
-    shade01_opts@lbTitleAngleF        = 90.                               ; title angle
-    shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
+      shade01_opts@lbOrientation        = "vertical"
+      shade01_opts@lbTitlePosition      = "Right"                           ; title location
+      shade01_opts@lbTitleDirection     = "Across"                          ; letter angle
+      shade01_opts@lbTitleAngleF        = 90.                               ; title angle
+      shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
 
-    shade01_opts@cnFillPalette        = "prcp_1"
-    shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-    shade01_opts@cnMinLevelValF       =       5              ; set min contour level
-    shade01_opts@cnMaxLevelValF       =      55              ; set max contour level
-    shade01_opts@cnLevelSpacingF      =       5              ; set contour spacing
+      shade01_opts@cnFillPalette        = "prcp_1"
+      shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+      shade01_opts@cnMinLevelValF       =       5              ; set min contour level
+      shade01_opts@cnMaxLevelValF       =      55              ; set max contour level
+      shade01_opts@cnLevelSpacingF      =       5              ; set contour spacing
 
-    shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
+      shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
 
-    contour01_opts = True 
-    contour01_opts = res
+      contour01_opts = True 
+      contour01_opts = res
 
-    contour01_opts@cnLineColor           = "black"   ; Set the line color
-    contour01_opts@cnInfoLabelOn         = False
-    contour01_opts@cnLineThicknessF      =  12
-    contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
-    contour01_opts@cnLineLabelInterval           = 1             ; default = 2
-    contour01_opts@cnLineLabelFontHeightF        = 0.025
+      contour01_opts@cnLineColor           = "black"   ; Set the line color
+      contour01_opts@cnInfoLabelOn         = False
+      contour01_opts@cnLineThicknessF      =  12
+      contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
+      contour01_opts@cnLineLabelInterval           = 1             ; default = 2
+      contour01_opts@cnLineLabelFontHeightF        = 0.025
 
-    contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-    contour01_opts@cnMinLevelValF       =      10                ; set min contour level
-    contour01_opts@cnMaxLevelValF       =      90                ; set max contour level
-    contour01_opts@cnLevelSpacingF      =      10                ; set contour spacing
+      contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+      contour01_opts@cnMinLevelValF       =      10                ; set min contour level
+      contour01_opts@cnMaxLevelValF       =      90                ; set max contour level
+      contour01_opts@cnLevelSpacingF      =      10                ; set contour spacing
 
-    contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
+      contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
 
-    plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-    plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-    overlay(plots,plots_contour)
+       plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+       plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+       overlay(plots,plots_contour)
+       draw(plots)
+       frame(wks01)
 
-    draw(plots)
-    frame(wks01)
-
-    c_ttt=c_ttt+ N_SKIPTIME
+       c_ttt=c_ttt+ N_SKIPTIME
   
-    end do ;;;it loop
+       end do ;;;it loop
+      end do ; iii loop
 
-  end do ; iii loop
-
-delete(timesd)
-
-
-exit
-
-   
-end do ; mmm loop
-end do ; nnn loop
+    delete(timesd)
+ 
+    end do ; mmm loop
+  end do ; nnn loop
 
 
 
