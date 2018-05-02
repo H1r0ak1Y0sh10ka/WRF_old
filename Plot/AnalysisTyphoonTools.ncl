@@ -60,7 +60,7 @@ pi            = 4.0*atan(1.0)
       data_cyclind(:,nr,na) = (1-DX)*( (1-DY)*data(:,Y1,X1) + DY*data(:,Y2,X1) )   \
                                         + DX*((1-DY)*data(:,Y1,X2) + DY*data(:,Y2,X2) )
       else
-      data_cyclind(mmm,c_ttt,:,nr,na) = data_cyclind@_FillValue
+      data_cyclind(:,nr,na) = data_cyclind@_FillValue
       end if
     
       end do ; na loop

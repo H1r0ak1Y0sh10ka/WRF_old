@@ -4,6 +4,7 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
 load "./radialAvg.ncl"
+load "./AnalysisTyphoonTools.ncl"
 load "./Tools.ncl"
 begin
 ;
