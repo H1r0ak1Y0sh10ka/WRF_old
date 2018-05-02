@@ -15,10 +15,10 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-  WRF_DIRC   = "/Volumes/Yoshi-HDD01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
-  TRACK_DIRC = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/"
+  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   = "/Volumes/Yoshi-HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   = "/Volumes/HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
 
   INIT = (/"20160106"/)     ; initial time/date
    
@@ -118,26 +118,26 @@ begin
     dbz_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
     rh_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
 
-    if(mmm.eq.0)then
+;    if(mmm.eq.0)then
 ;;;;;; ento zahyo junbi ;;;;;;;;
 
-    angle_div_deg = 360.0/int2flt(N_ANGLE)
-    angle_phi     = new ( (/N_ANGLE/),"float")
-    pi            = 4.0*atan(1.0) 
+;    angle_div_deg = 360.0/int2flt(N_ANGLE)
+;    angle_phi     = new ( (/N_ANGLE/),"float")
+;    pi            = 4.0*atan(1.0) 
 
-    angle_phi=new ( (/N_ANGLE/),"float")
-    Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-    Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
+;    angle_phi=new ( (/N_ANGLE/),"float")
+;    Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
+;    Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
 
-    dbz_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    rh_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+;    dbz_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+;    rh_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
 
-      do na = 0,N_ANGLE-1
-      Angle=angle_div_deg*int2flt(na)
-      angle_phi(na)=pi*(Angle/180.0)
-      end do
+;      do na = 0,N_ANGLE-1
+;      Angle=angle_div_deg*int2flt(na)
+;      angle_phi(na)=pi*(Angle/180.0)
+;      end do
 ;;;;;;;;;;;;;;;;;;;;;;;;
-    end if
+;    end if
 
     c_ttt=0
 
@@ -156,7 +156,9 @@ begin
       
         dbz_levs(c_ttt,:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
         rh_levs(c_ttt,:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-
+ 
+        dammy= rectangular2polar(rh_levs(c_ttt,:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+   exit
           do nr = 0,N_RADIUS,1
             do na = 0,N_ANGLE-1
 

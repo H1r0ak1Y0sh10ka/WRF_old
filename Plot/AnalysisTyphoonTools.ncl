@@ -22,18 +22,23 @@
 undef ( "rectangular2polar" )
 function rectangular2polar (  \
   data[*][*][*]      : numeric, \
-  N_LAT[*]           : numeric, \
-  N_LON[*]           : numeric, \
-  N_ANGLE[*]         : numeric, \
+  N_RADIUS[*]        : numeric, \
+  N_ANGLE[*]         : numeric,  \
+  N_CenterLAT[*]     : numeric,  \
+  N_CenterLON[*]     : numeric  \
 )
 local none
 begin
+
+nlat          = dimsizes(data(0,:,0))
+nlon          = dimsizes(data(0,0,:))
+nlevs         = dimsizes(data(:,0,0))
 
 
 angle_phi     = new ( (/N_ANGLE/),"float")
 cylind_x      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
 cylind_y      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
-data_cyclind  = new( (/dimsizes(data(:,0,0),N_RADIUS+1,N_ANGLE/),"float") 
+data_cyclind  = new( (/nlevs,N_RADIUS+1,N_ANGLE/),"float") 
 
 angle_div_deg = 360.0/int2flt(N_ANGLE)
 pi            = 4.0*atan(1.0) 
@@ -46,8 +51,8 @@ pi            = 4.0*atan(1.0)
     do nr = 0,N_RADIUS,1
       do na = 0,N_ANGLE-1
 
-      cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-      cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
+      cylind_x(nr,na)=N_CenterLON + nr*cos(angle_phi(na))
+      cylind_y(nr,na)=N_CenterLAT + nr*sin(angle_phi(na))
   
       X1=floattointeger(cylind_x(nr,na))
       X2=X1+1
@@ -67,6 +72,9 @@ pi            = 4.0*atan(1.0)
     end do ; nr loop
     
 data_cyclind@units = data@units
+
+     print(data_cyclind)
+
 return( [/ data_cyclind /] )
 
 end
