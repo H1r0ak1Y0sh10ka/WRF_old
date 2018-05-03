@@ -4,6 +4,7 @@
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
 load "./radialAvg.ncl"
+load "./AnalysisTyphoonTools.ncl"
 load "./Tools.ncl"
 begin
 ;
@@ -114,29 +115,10 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     rh         = new ( (/nz,nlat,nlon/),"float")
 
-    dbz_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    rh_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-
-    if(mmm.eq.0)then
-;;;;;; ento zahyo junbi ;;;;;;;;
-
-    angle_div_deg = 360.0/int2flt(N_ANGLE)
-    angle_phi     = new ( (/N_ANGLE/),"float")
-    pi            = 4.0*atan(1.0) 
-
-    angle_phi=new ( (/N_ANGLE/),"float")
-    Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-    Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-
-    dbz_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    rh_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-
-      do na = 0,N_ANGLE-1
-      Angle=angle_div_deg*int2flt(na)
-      angle_phi(na)=pi*(Angle/180.0)
-      end do
-;;;;;;;;;;;;;;;;;;;;;;;;
-    end if
+    dbz_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    rh_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    dbz_cyclind= new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
 
     c_ttt=0
 
@@ -153,134 +135,110 @@ begin
         rh(:,:,:)    = wrf_user_getvar(f[iii],"rh",it)        ; rh
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
       
-        dbz_levs(c_ttt,:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        rh_levs(c_ttt,:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        dbz_levs(:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        rh_levs(:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+ 
+        dammy = rectangular2polar(dbz_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dbz_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
+        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        rh_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
 
-          do nr = 0,N_RADIUS,1
-            do na = 0,N_ANGLE-1
-
-            Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-            Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
-  
-            X1=floattointeger(Cylind_x(nr,na))
-            X2=X1+1
-            Y1=floattointeger(Cylind_y(nr,na))
-            Y2=Y1+1
-            DX=abs(Cylind_x(nr,na)-X1)
-            DY=abs(Cylind_y(nr,na)-Y1)
-
-            if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
-            dbz_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*dbz_levs(c_ttt,:,Y1,X1) + DY*dbz_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*dbz_levs(c_ttt,:,Y1,X2) + DY*dbz_levs(c_ttt,:,Y2,X2) )
-            rh_cyclind(mmm,c_ttt,:,nr,na)   = (1-DX)*( (1-DY)*rh_levs(c_ttt,:,Y1,X1) + DY*rh_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*rh_levs(c_ttt,:,Y1,X2) + DY*rh_levs(c_ttt,:,Y2,X2) )
-            else
-            dbz_cyclind(mmm,c_ttt,:,nr,na) = dbz_cyclind@_FillValue
-            rh_cyclind(mmm,c_ttt,:,nr,na)  = rh_cyclind@_FillValue
-            end if
-    
-            end do ; na loop
-          end do ; nr loop
-
-  print("Now drawing time is "+times(c_ttt))
+        print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-S_dbz-C_rh-vertical02-v1_"+TY_NAME+"_"+INIT(nnn)+"_"+MEMBER(mmm)+"-trackingcut_"+times(c_ttt))
 
-  res = True
-  res@gsnDraw             = False
-  res@gsnFrame            = False
-  res@gsnMaximize         = True
-  res@vpWidthF            = 0.60
-  res@vpHeightF           = 0.60
-  res@gsnLeftString       = times(c_ttt)
+       if(c_ttt.lt.10)then
+       ft_time = "FT00"+c_ttt
+       else if (c_ttt.ge.10.and.c_ttt.lt.100)then
+       ft_time   = "FT0"+c_ttt
+       else if (c_ttt.ge.100)then
+       ft_time   = "FT"+c_ttt
+       end if 
+       end if
+       end if
 
-  if(c_ttt.lt.10)then
-  res@gsnRightString   = "f00"+c_ttt
-  else if (c_ttt.ge.10.and.c_ttt.lt.100)then
-  res@gsnRightString   = "f0"+c_ttt
-  else if (c_ttt.ge.100)then
-  res@gsnRightString   = "f"+c_ttt
-  end if 
-  end if
-  end if
+       wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
 
-  X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
-  Y_LABEL =  zlevs*0.001 
+       res = True
+       res@gsnDraw             = False
+       res@gsnFrame            = False
+       res@gsnMaximize         = True
+       res@vpWidthF            = 0.60
+       res@vpHeightF           = 0.60
+       res@gsnLeftString       = ft_time + ", " + times(c_ttt)
+       res@gsnRightString      = "Mem; " + MEMBER(mmm)
 
-  res@tiXAxisString        = "Radius from the centre (km)"  
-  res@tmXBMode = "Explicit"
-  res@tmXBValues = ispan(0,N_RADIUS,5)
-  res@tmXBLabels = tostring(ispan(0,N_RADIUS,5)*10)
+       ;X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
+       Y_LABEL =  zlevs*0.001 
 
-  res@tiYAxisString        = "Height(km)"  
-  res@tmYLMode = "Explicit"
-  res@tmYLValues = ispan(0,N_ZLEVS-1,10)
-  res@tmYLLabels = Y_LABEL(ispan(0,N_ZLEVS-1,10))
-  res@tmYLLabelFontHeightF = 0.02
+       res@tiXAxisString       = "Radius from the centre (km)"  
+       res@tmXBMode            = "Explicit"
+       res@tmXBValues          = ispan(0,N_RADIUS,5)
+       res@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
 
-  shade01_opts = True 
-  shade01_opts = res
+       res@tiYAxisString       = "Height(km)"  
+       res@tmYLMode            = "Explicit"
+       res@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+       res@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+       res@tmYLLabelFontHeightF= 0.02
 
-  shade01_opts@cnFillOn             = True                   ; turn on color
-  shade01_opts@lbLabelAutoStride    = True                   ; nice label bar labels
-  shade01_opts@cnLinesOn            = False                  ; no contour lines
+       shade01_opts = True 
+       shade01_opts = res
 
-  shade01_opts@lbOrientation        = "vertical"
-  shade01_opts@lbTitlePosition      = "Right"                           ; title location
-  shade01_opts@lbTitleDirection     = "Across"                          ; letter angle
-  shade01_opts@lbTitleAngleF        = 90.                               ; title angle
-  shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
+       shade01_opts@cnFillOn             = True                   ; turn on color
+       shade01_opts@lbLabelAutoStride    = True                   ; nice label bar labels
+       shade01_opts@cnLinesOn            = False                  ; no contour lines
 
-  shade01_opts@cnFillPalette         = "prcp_1"
-  shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  shade01_opts@cnMinLevelValF       =       5              ; set min contour level
-  shade01_opts@cnMaxLevelValF       =      55              ; set max contour level
-  shade01_opts@cnLevelSpacingF      =       5              ; set contour spacing
+       shade01_opts@lbOrientation        = "vertical"
+       shade01_opts@lbTitlePosition      = "Right"                           ; title location
+       shade01_opts@lbTitleDirection     = "Across"                          ; letter angle
+       shade01_opts@lbTitleAngleF        = 90.                               ; title angle
+       shade01_opts@lbTitleFontHeightF   = 0.015                              ; font height
 
-  shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
+       shade01_opts@cnFillPalette        = "prcp_1"
+       shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+       shade01_opts@cnMinLevelValF       =       5              ; set min contour level
+       shade01_opts@cnMaxLevelValF       =      55              ; set max contour level
+       shade01_opts@cnLevelSpacingF      =       5              ; set contour spacing
 
-  contour01_opts = True 
-  contour01_opts = res
+       shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
 
-  contour01_opts@cnLineColor           = "black"   ; Set the line color
-  contour01_opts@cnInfoLabelOn         = False  
-  contour01_opts@cnLineThicknessF      =  12
-  contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
-  contour01_opts@cnLineLabelInterval           = 1             ; default = 2
-  contour01_opts@cnLineLabelFontHeightF        = 0.025
+       contour01_opts = True 
+       contour01_opts = res
 
-  contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  contour01_opts@cnMinLevelValF       =      10                ; set min contour level
-  contour01_opts@cnMaxLevelValF       =      90                ; set max contour level
-  contour01_opts@cnLevelSpacingF      =      10                ; set contour spacing
+       contour01_opts@cnLineColor           = "black"   ; Set the line color
+       contour01_opts@cnInfoLabelOn         = False
+       contour01_opts@cnLineThicknessF      =  12
+       contour01_opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
+       contour01_opts@cnLineLabelInterval           = 1             ; default = 2
+       contour01_opts@cnLineLabelFontHeightF        = 0.025
 
-   contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2) 
+       contour01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+       contour01_opts@cnMinLevelValF       =      10                ; set min contour level
+       contour01_opts@cnMaxLevelValF       =      90                ; set max contour level
+       contour01_opts@cnLevelSpacingF      =      10                ; set contour spacing
 
-   plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-   plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-   overlay(plots,plots_contour)
+       contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
 
+       plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+       plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+       overlay(plots,plots_contour)
+       draw(plots)
+       frame(wks01)
 
-  draw(plots)
-  frame(wks01)  
-
-  c_ttt=c_ttt+ N_SKIPTIME
+       c_ttt = c_ttt + N_SKIPTIME
   
-    end do ;;;it loop
+       end do ;;;it loop
+      end do ; iii loop
 
-  end do ; iii loop
-
-  delete(timesd)
-
-
-exit
-
-   
-end do ; mmm loop
-end do ; nnn loop
+    delete(timesd)
+ 
+    end do ; mmm loop
+  end do ; nnn loop
 
 
 
