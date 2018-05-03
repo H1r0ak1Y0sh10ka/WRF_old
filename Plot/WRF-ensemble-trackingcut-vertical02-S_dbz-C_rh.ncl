@@ -115,29 +115,10 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     rh         = new ( (/nz,nlat,nlon/),"float")
 
-    dbz_levs   = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-    rh_levs    = new ( (/n_timestep,N_ZLEVS,nlat,nlon/),"float")
-
-;    if(mmm.eq.0)then
-;;;;;; ento zahyo junbi ;;;;;;;;
-
-;    angle_div_deg = 360.0/int2flt(N_ANGLE)
-;    angle_phi     = new ( (/N_ANGLE/),"float")
-;    pi            = 4.0*atan(1.0) 
-
-;    angle_phi=new ( (/N_ANGLE/),"float")
-;    Cylind_x=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-;    Cylind_y=new( (/N_RADIUS+1,N_ANGLE/),"float")  ;Cylindrical coordinate
-
-;    dbz_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-;    rh_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-
-;      do na = 0,N_ANGLE-1
-;      Angle=angle_div_deg*int2flt(na)
-;      angle_phi(na)=pi*(Angle/180.0)
-;      end do
-;;;;;;;;;;;;;;;;;;;;;;;;
-;    end if
+    dbz_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    rh_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    dbz_cyclind= new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
 
     c_ttt=0
 
@@ -154,38 +135,17 @@ begin
         rh(:,:,:)    = wrf_user_getvar(f[iii],"rh",it)        ; rh
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
       
-        dbz_levs(c_ttt,:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        rh_levs(c_ttt,:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        dbz_levs(:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        rh_levs(:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
  
-        dammy= rectangular2polar(rh_levs(c_ttt,:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
-   exit
-          do nr = 0,N_RADIUS,1
-            do na = 0,N_ANGLE-1
+        dammy = rectangular2polar(dbz_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dbz_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
+        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        rh_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
 
-            Cylind_x(nr,na)=c_ilon(mmm,c_ttt)+ nr*cos(angle_phi(na))
-            Cylind_y(nr,na)=c_ilat(mmm,c_ttt)+ nr*sin(angle_phi(na))
-  
-            X1=floattointeger(Cylind_x(nr,na))
-            X2=X1+1
-            Y1=floattointeger(Cylind_y(nr,na))
-            Y2=Y1+1
-            DX=abs(Cylind_x(nr,na)-X1)
-            DY=abs(Cylind_y(nr,na)-Y1)
-
-            if(X1.ge.0.and.X1.le.(nlon-1).and.X2.ge.0.and.X2.le.(nlon-1).and.Y1.ge.0.and.Y1.le.(nlat-1).and.Y1.ge.0.and.Y2.le.(nlat-1))then
-            dbz_cyclind(mmm,c_ttt,:,nr,na)  = (1-DX)*( (1-DY)*dbz_levs(c_ttt,:,Y1,X1) + DY*dbz_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*dbz_levs(c_ttt,:,Y1,X2) + DY*dbz_levs(c_ttt,:,Y2,X2) )
-            rh_cyclind(mmm,c_ttt,:,nr,na)   = (1-DX)*( (1-DY)*rh_levs(c_ttt,:,Y1,X1) + DY*rh_levs(c_ttt,:,Y2,X1) )   \
-                                          + DX*((1-DY)*rh_levs(c_ttt,:,Y1,X2) + DY*rh_levs(c_ttt,:,Y2,X2) )
-            else
-            dbz_cyclind(mmm,c_ttt,:,nr,na) = dbz_cyclind@_FillValue
-            rh_cyclind(mmm,c_ttt,:,nr,na)  = rh_cyclind@_FillValue
-            end if
-    
-            end do ; na loop
-          end do ; nr loop
-
-       print("Now drawing time is "+times(c_ttt))
+        print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot
 ;************************************************
@@ -201,7 +161,7 @@ begin
        end if
        end if
 
-       wks01 = gsn_open_wks(TYPE,OUT_DIRC+"/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-"+TY_NAME+"-"+INIT(nnn)+"-"+ft_time+"-"+times(c_ttt))
+       wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
 
        res = True
        res@gsnDraw             = False
@@ -209,8 +169,8 @@ begin
        res@gsnMaximize         = True
        res@vpWidthF            = 0.60
        res@vpHeightF           = 0.60
-       res@gsnLeftString       = times(c_ttt)
-       res@gsnRightString      = ft_time
+       res@gsnLeftString       = ft_time + ", " + times(c_ttt)
+       res@gsnRightString      = "Mem; " + MEMBER(mmm)
 
        ;X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
        Y_LABEL =  zlevs*0.001 
