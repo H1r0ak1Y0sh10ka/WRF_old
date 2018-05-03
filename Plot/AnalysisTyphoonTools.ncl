@@ -34,8 +34,7 @@ nlat          = dimsizes(data(0,:,0))
 nlon          = dimsizes(data(0,0,:))
 nlevs         = dimsizes(data(:,0,0))
 
-
-angle_phi     = new ( (/N_ANGLE/),"float")
+angle_phi     = new( (/N_ANGLE/),"float")
 cylind_x      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
 cylind_y      = new( (/N_RADIUS+1,N_ANGLE/),"float")  ;cylindrical coordinate
 data_cyclind  = new( (/nlevs,N_RADIUS+1,N_ANGLE/),"float") 
@@ -65,16 +64,13 @@ pi            = 4.0*atan(1.0)
       data_cyclind(:,nr,na) = (1-DX)*( (1-DY)*data(:,Y1,X1) + DY*data(:,Y2,X1) )   \
                                         + DX*((1-DY)*data(:,Y1,X2) + DY*data(:,Y2,X2) )
       else
-      data_cyclind(:,nr,na) = data_cyclind@_FillValue
+      data_cyclind(:,nr,na) = data@_FillValue
       end if
     
       end do ; na loop
     end do ; nr loop
     
 data_cyclind@units = data@units
-
-     print(data_cyclind)
-
 return( [/ data_cyclind /] )
 
 end
