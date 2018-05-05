@@ -188,14 +188,14 @@ begin
         res@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
         res@tmYLLabelFontHeightF= 0.02
 
-        dammy=Config_dbz_shade(res)
-        shade01_opts = dammy[0]
-        delete(dammy)
+        shade01_opts = True
+        shade01_opts = res
+        Config_dbz_shade(shade01_opts)
 
-        dammy=Config_rh_contour(res)
-        contour01_opts = dammy[0]
-        delete(dammy)
-
+        contour01_opts = True
+        contour01_opts = res
+        Config_rh_contour(contour01_opts)
+        
         shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
         contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
 
