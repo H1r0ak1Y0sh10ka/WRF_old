@@ -12,56 +12,47 @@
 ; ====================================================================================================
 
 undef ( "Config_dbz_shade" )
-function Config_dbz_shade (  \
+procedure Config_dbz_shade (  \
   RES[*]           : logical \
   )
 local none
 begin
 
-opts = True 
-opts = RES
-opts@cnFillOn             = True                   ; turn on color
-opts@lbLabelAutoStride    = True                   ; nice label bar labels
-opts@cnLinesOn            = False                  ; no contour lines
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
 
-opts@lbOrientation        = "vertical"
-opts@lbTitlePosition      = "Right"                           ; title location
-opts@lbTitleDirection     = "Across"                          ; letter angle
-opts@lbTitleAngleF        = 90.                               ; title angle
-opts@lbTitleFontHeightF   = 0.015                              ; font height
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.015                              ; font height
 
-opts@cnFillPalette        = "prcp_1"
-opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-opts@cnMinLevelValF       =       5              ; set min contour level
-opts@cnMaxLevelValF       =      55              ; set max contour level
-opts@cnLevelSpacingF      =       5              ; set contour spacing
-
-return( [/ opts /] )
+RES@cnFillPalette        = "prcp_1"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =       5              ; set min contour level
+RES@cnMaxLevelValF       =      55              ; set max contour level
+RES@cnLevelSpacingF      =       5              ; set contour spacing
 
 end
 
 undef ( "Config_rh_contour" )
-function Config_rh_contour (  \
+procedure Config_rh_contour (  \
   RES[*]           : logical \
   )
 local none
 begin
 
-opts = True 
-opts = RES
+RES@cnLineColor           = "black"   ; Set the line color
+RES@cnInfoLabelOn         = False
+RES@cnLineThicknessF      =  12
+RES@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
+RES@cnLineLabelInterval           = 1             ; default = 2
+RES@cnLineLabelFontHeightF        = 0.025
 
-opts@cnLineColor           = "black"   ; Set the line color
-opts@cnInfoLabelOn         = False
-opts@cnLineThicknessF      =  12
-opts@gsnContourNegLineDashPattern  = 1 	; sets negative contours to dash pattern 1
-opts@cnLineLabelInterval           = 1             ; default = 2
-opts@cnLineLabelFontHeightF        = 0.025
-
-opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-opts@cnMinLevelValF       =      10                ; set min contour level
-opts@cnMaxLevelValF       =      90                ; set max contour level
-opts@cnLevelSpacingF      =      10                ; set contour spacing
-
-return( [/ opts /] )
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =      10                ; set min contour level
+RES@cnMaxLevelValF       =      90                ; set max contour level
+RES@cnLevelSpacingF      =      10                ; set contour spacing
 
 end
