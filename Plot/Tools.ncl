@@ -29,4 +29,21 @@ end if
 
 end
 
+undef ( "align_add0" )
+procedure align_add0 (  \
+  PATH[*]           : string \
+  )
+local ret
+begin
+
+ret = systemfunc("test -d " + PATH + "; echo $?")
+if(ret .eq. 0) then
+print("--> "+ PATH +": exists")                  ;-- do what you want to do
+else if(ret .eq.1) then
+print("--> "+ PATH +": doesn't exist: create")   ;-- create the desired directory
+system("mkdir -p " + PATH)
+end if
+end if
+
+end
 
