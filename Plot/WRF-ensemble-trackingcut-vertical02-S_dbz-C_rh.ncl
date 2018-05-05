@@ -148,7 +148,7 @@ begin
 
         print("Now drawing time is "+times(c_ttt))
 ;************************************************
-; create plot
+; create plot of EACH MEMBER
 ;************************************************
 ; Set some basic resources
 
@@ -164,29 +164,34 @@ begin
 
         wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
 
-        res = True
-        res@gsnDraw             = False
-        res@gsnFrame            = False
-        res@gsnMaximize         = True
-        res@vpWidthF            = 0.80
-        res@vpHeightF           = 0.60
-        res@gsnLeftString       = ft_time + ", " + times(c_ttt)
-        res@gsnRightString      = "Mem; " + MEMBER(mmm)
+        res_title = True
+        res_title@gsnLeftString       = ft_time + ", " + times(c_ttt)
+        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
-       ;X_LABEL = (fspan( 0,((DIS*0.001)*N_RADIUS),N_RADIUS+1))
+        res_basis = True
+        res_basis@gsnDraw             = False
+        res_basis@gsnFrame            = False
+        res_basis@gsnMaximize         = True
+        res_basis@vpWidthF            = 0.80
+        res_basis@vpHeightF           = 0.60
+
         Y_LABEL =  zlevs*0.001 
 
-        res@tiXAxisString       = "Radius from the centre (km)"  
-        res@tmXBMode            = "Explicit"
-        res@tmXBValues          = ispan(0,N_RADIUS,5)
-        res@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
-        res@tmXBLabelFontHeightF= 0.02
+        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tmXBMode            = "Explicit"
+        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
+        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+        res_basis@tmXBLabelFontHeightF= 0.02
 
-        res@tiYAxisString       = "Height(km)"  
-        res@tmYLMode            = "Explicit"
-        res@tmYLValues          = ispan(0,N_ZLEVS-1,10)
-        res@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
-        res@tmYLLabelFontHeightF= 0.02
+        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tmYLMode            = "Explicit"
+        res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+        res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+        res_basis@tmYLLabelFontHeightF= 0.02
+
+        res = True
+        res = res_basis
+        res = res_title
 
         shade01_opts = True
         shade01_opts = res
@@ -196,11 +201,10 @@ begin
         contour01_opts = res
         Config_rh_contour(contour01_opts)
         
-        shade01_data  = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
         contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
-
-        plots         = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-        plots_contour = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+        plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
         overlay(plots,plots_contour)
         draw(plots)
         frame(wks01)
@@ -211,16 +215,61 @@ begin
       end do ; iii loop
 
     delete(timesd)
- 
+
     end do ; mmm loop
+
+;************************************************
+; create plot of ENSEMBLE MEAN and SPREAD
+;************************************************
+
+    do it = 0,n_times-1, N_SKIPTIME
+
+    print("Now drawing time is "+times(c_ttt))
+; Set some basic resources
+
+    if(c_ttt.lt.10)then
+    ft_time = "FT00"+c_ttt
+    else if (c_ttt.ge.10.and.c_ttt.lt.100)then
+    ft_time   = "FT0"+c_ttt
+    else if (c_ttt.ge.100)then
+    ft_time   = "FT"+c_ttt
+    end if 
+    end if
+    end if
+
+    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-mmm-" + ft_time + "-" + times(c_ttt))
+
+    res_title = True
+    res_title@gsnLeftString       = ft_time + ", " + times(c_ttt)
+    res_title@gsnRightString      = "Mem; mmm"
+       
+    res = res_basis
+    res = res_title
+
+    shade01_opts = True
+    shade01_opts = res
+    Config_dbz_shade(shade01_opts)
+
+    contour01_opts = True
+    contour01_opts = res
+    Config_rh_contour(contour01_opts)
+       
+    shade01_data   = dim_avg_n(dim_avg_n(dbz_cyclind(:,c_ttt,:,:,:),2),0)
+    contour01_data = dim_avg_n(dim_avg_n(rh_cyclind(:,c_ttt,:,:,:),2),0)
+    plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+    plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+    overlay(plots,plots_contour)
+    draw(plots)
+    frame(wks01)
+
+    c_ttt = c_ttt + N_SKIPTIME
+  
+    end do ;;;it loop
+
   end do ; nnn loop
-
-
 
 exit
 
 end
-
-
 
 
