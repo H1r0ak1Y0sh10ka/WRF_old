@@ -20,14 +20,13 @@ begin
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
   OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
-;"~/Google\ Drive\ File\ Stream/マイドライブ/research/draw/S_dbz-C_rh/"+TY_NAME+"/"
 
   INIT = (/"20160106"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
   SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = 12       ; number of skip time  
+  N_SKIPTIME    = 24       ; number of skip time  
 
   RADIUS_KM     = 200      ; kilometer
   N_RADIUS      = 25       ; number of grids
@@ -280,7 +279,7 @@ begin
     dammy=(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
     shade02_data   = dim_stddev_n(dammy,0)
     delete(dammy)
-    ;print(shade02_data)
+   ; print(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
