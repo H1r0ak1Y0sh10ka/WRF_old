@@ -123,8 +123,10 @@ begin
 
     h_diabatic_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
     vt_levs            = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    if(mmm.eq.0)then
     h_diabatic_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind         = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    end if
 
     c_ttt=0
 

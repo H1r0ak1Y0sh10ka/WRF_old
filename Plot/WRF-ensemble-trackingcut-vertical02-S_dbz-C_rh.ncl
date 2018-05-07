@@ -120,9 +120,11 @@ begin
 
     dbz_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
     rh_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    if(mmm.eq.0)then
     dbz_cyclind= new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-
+    end if
+    
     c_ttt=0
 
       do iii =0,listnum-1,1

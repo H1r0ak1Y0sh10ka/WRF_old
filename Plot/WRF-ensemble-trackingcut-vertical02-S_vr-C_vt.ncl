@@ -42,7 +42,7 @@ begin
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
   n_INIT   = dimsizes(INIT)
-  n_MEMBER = 3;dimsizes(MEMBER)
+  n_MEMBER = dimsizes(MEMBER)
   zlevs    = fspan(0,ZTOP,N_ZLEVS)
   zlevs!0  = "lev"
   makedir(OUT_DIRC)
@@ -122,9 +122,11 @@ begin
 
     vr_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
     vt_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    if(mmm.eq.0)then
     vr_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-
+    end if
+    
     c_ttt=0
 
       do iii =0,listnum-1,1
@@ -279,9 +281,7 @@ begin
     shade02_opts = True
     shade02_opts = res
     Config_vrSprd_shade(shade02_opts)
-;printVarSummary(vr_azimuth_mean)
     shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
-print((vr_azimuth_mean(:,10,50)))
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
