@@ -19,7 +19,9 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_h_diabatic-C_rh/"+TY_NAME+"/"
+
+  OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_h_diabatic-C_vt-v1-"
 
   INIT = (/"20160106"/)     ; initial time/date
    
@@ -137,7 +139,7 @@ begin
         times(c_ttt) = timesd(it)                             ; get all times in the file
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
         dammy = f[iii]->H_DIABATIC
-        h_diabatic(:,:,:) = dammy(it,:,:,:)*3600
+        h_diabatic(:,:,:) = dammy(it,:,:,:)*10*10*10
         h_diabatic@units="K hour-1"
         delete(dammy)
         
@@ -146,15 +148,16 @@ begin
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
         
         h_diabatic_levs(:,:,:) = wrf_user_intrp3d(h_diabatic(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", zlevs,0.,False)
- 
+        vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
+        delete(vComps)
+
         dammy = rectangular2polar(h_diabatic_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
         h_diabatic_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-exit
+
         print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot of EACH MEMBER
@@ -171,7 +174,7 @@ exit
         end if
         end if
 
-        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
 
         res_title = True
         res_title@gsnLeftString       = ft_time + ", " + times(c_ttt)
@@ -204,14 +207,14 @@ exit
 
         shade01_opts = True
         shade01_opts = res
-        Config_dbz_shade(shade01_opts)
+        Config_h_diabatic_shade(shade01_opts)
 
         contour01_opts = True
         contour01_opts = res
-        Config_rh_contour(contour01_opts)
+        Config_vt_contour(contour01_opts)
         
-        shade01_data   = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
-        contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = dim_avg_n(h_diabatic_cyclind(mmm,c_ttt,:,:,:),2)
+        contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
         overlay(plots,plots_contour)
@@ -249,8 +252,8 @@ exit
     end if
     end if
 
-    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(it))
-    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
+    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(it))
+    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
 
     res_title = True
     res_title@gsnLeftString       = ft_time + ", " + times(it)
@@ -267,8 +270,8 @@ exit
     contour01_opts = res
     Config_rh_contour(contour01_opts)
        
-    shade01_data   = dim_avg_n(dim_avg_n(dbz_cyclind(:,it,:,:,:),3),0)
-    contour01_data = dim_avg_n(dim_avg_n(rh_cyclind(:,it,:,:,:),3),0)
+    shade01_data   = dim_avg_n(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3),0)
+    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
     plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
@@ -283,7 +286,7 @@ exit
     shade02_opts = res
     Config_dbzSprd_shade(shade02_opts)
 
-    dammy=(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
+    dammy=(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3))
     shade02_data   = dim_stddev_n(dammy,0)
     delete(dammy)
    ; print(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
