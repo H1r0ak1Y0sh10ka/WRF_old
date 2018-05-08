@@ -184,17 +184,19 @@ begin
 
         Y_LABEL =  zlevs*0.001 
 
-        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tiXAxisString       = "Radius from the centre (km)" 
+        res_basis@tiXAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmXBMode            = "Explicit"
         res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
         res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
-        res_basis@tmXBLabelFontHeightF= 0.02
+        res_basis@tmXBLabelFontHeightF= 0.03
 
-        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tiYAxisString       = "Height(km)"
+        res_basis@tiYAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmYLMode            = "Explicit"
         res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
         res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
-        res_basis@tmYLLabelFontHeightF= 0.02
+        res_basis@tmYLLabelFontHeightF= 0.03
 
         res = True
         res = res_basis

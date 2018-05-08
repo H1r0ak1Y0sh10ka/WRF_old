@@ -16,17 +16,17 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
-  TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
+  WRF_DIRC   = "/Volumes/Yoshi-HDD01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_h_diabatic-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/Yoshi-HDD01/research/ncl/draw/S_h_diabatic-C_rh/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_h_diabatic-C_vt-v1-"
 
   INIT = (/"20160106"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
+  SWITCH_MEAN   = "OFF" ; ON is draw, OFF is not.
 
   N_SKIPTIME    = 24       ; number of skip time  
 
@@ -57,7 +57,7 @@ begin
   wrflist = systemfunc("basename " + cccc +"wrfout*")
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
-    do mmm = 0, n_MEMBER-1,1
+    do mmm = 10, n_MEMBER-1,1
 
     trackdata = TRACK_DIRC+"/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
@@ -74,20 +74,18 @@ begin
     nfields     = dimsizes(field_names)
 ;---We're going to read the whole file as a 2D array of strings
     fields = new((/nfields,nlines/),string)
-    if(mmm.eq.0)then
-    c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
-    c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
-    c_lat  = new ( (/n_MEMBER,nlines/),"float")
-    c_lon  = new ( (/n_MEMBER,nlines/),"float")
-    end if
+    c_ilat = new ( (/nlines/),"integer")
+    c_ilon = new ( (/nlines/),"integer")
+    c_lat  = new ( (/nlines/),"float")
+    c_lon  = new ( (/nlines/),"float")
 
 ;---ReMEMBER that fields start at 1, not 0.
       do nf=0,nfields-1
       fields(nf,:) = str_get_field(lines,nf+1,delim)    
-      c_ilat(mmm,:) = stringtointeger(fields(2,:))
-      c_lat(mmm,:)  = stringtofloat(fields(4,:))
-      c_ilon(mmm,:) = stringtointeger(fields(3,:))
-      c_lon(mmm,:)  = stringtofloat(fields(5,:))
+      c_ilat(:) = stringtointeger(fields(2,:))
+      c_lat(:)  = stringtofloat(fields(4,:))
+      c_ilon(:) = stringtointeger(fields(3,:))
+      c_lon(:)  = stringtofloat(fields(5,:))
       end do
 
     filw = systemfunc("ls " + WRF_DIRC + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
@@ -123,7 +121,7 @@ begin
 
     h_diabatic_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
     vt_levs            = new ( (/N_ZLEVS,nlat,nlon/),"float")
-    if(mmm.eq.0)then
+    if(isdefined("h_diabatic_cyclind").eq.False)then
     h_diabatic_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind         = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
@@ -141,22 +139,22 @@ begin
         times(c_ttt) = timesd(it)                             ; get all times in the file
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
         dammy = f[iii]->H_DIABATIC
-        h_diabatic(:,:,:) = dammy(it,:,:,:)*10*10*10
+        h_diabatic(:,:,:) = dammy(it,:,:,:)*3600
         h_diabatic@units="K hour-1"
         delete(dammy)
         
         uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
-        vComps = calcWindComponents(uu,vv,lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
+        vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
         
         h_diabatic_levs(:,:,:) = wrf_user_intrp3d(h_diabatic(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
+        vt_levs(:,:,:)         = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
         delete(vComps)
 
-        dammy = rectangular2polar(h_diabatic_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dammy = rectangular2polar(h_diabatic_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         h_diabatic_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-        dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
 
@@ -291,7 +289,6 @@ begin
     dammy=(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3))
     shade02_data   = dim_stddev_n(dammy,0)
     delete(dammy)
-   ; print(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
