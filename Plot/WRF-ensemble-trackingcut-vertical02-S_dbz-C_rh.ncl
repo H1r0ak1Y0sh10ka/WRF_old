@@ -72,20 +72,18 @@ begin
     nfields     = dimsizes(field_names)
 ;---We're going to read the whole file as a 2D array of strings
     fields = new((/nfields,nlines/),string)
-    if(mmm.eq.0)then
-    c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
-    c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
-    c_lat  = new ( (/n_MEMBER,nlines/),"float")
-    c_lon  = new ( (/n_MEMBER,nlines/),"float")
-    end if
+    c_ilat = new ( (/nlines/),"integer")
+    c_ilon = new ( (/nlines/),"integer")
+    c_lat  = new ( (/nlines/),"float")
+    c_lon  = new ( (/nlines/),"float")
 
 ;---ReMEMBER that fields start at 1, not 0.
       do nf=0,nfields-1
       fields(nf,:) = str_get_field(lines,nf+1,delim)    
-      c_ilat(mmm,:) = stringtointeger(fields(2,:))
-      c_lat(mmm,:)  = stringtofloat(fields(4,:))
-      c_ilon(mmm,:) = stringtointeger(fields(3,:))
-      c_lon(mmm,:)  = stringtofloat(fields(5,:))
+      c_ilat(:) = stringtointeger(fields(2,:))
+      c_lat(:)  = stringtofloat(fields(4,:))
+      c_ilon(:) = stringtointeger(fields(3,:))
+      c_lon(:)  = stringtofloat(fields(5,:))
       end do
 
     filw = systemfunc("ls " + WRF_DIRC + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
@@ -120,7 +118,7 @@ begin
 
     dbz_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
     rh_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
-    if(mmm.eq.0)then
+    if(isdefined("dbz_cyclind").eq.False)then
     dbz_cyclind= new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
@@ -143,10 +141,10 @@ begin
         dbz_levs(:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
         rh_levs(:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
  
-        dammy = rectangular2polar(dbz_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dammy = rectangular2polar(dbz_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         dbz_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         rh_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
 
