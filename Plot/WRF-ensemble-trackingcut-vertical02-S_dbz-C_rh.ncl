@@ -279,7 +279,6 @@ begin
     dammy=(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
     shade02_data   = dim_stddev_n(dammy,0)
     delete(dammy)
-   ; print(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
