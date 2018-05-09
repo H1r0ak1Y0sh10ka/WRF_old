@@ -276,9 +276,7 @@ begin
     shade02_opts = res
     Config_dbzSprd_shade(shade02_opts)
 
-    dammy=(dim_avg_n(dbz_cyclind(:,it,:,:,:),3))
-    shade02_data   = dim_stddev_n(dammy,0)
-    delete(dammy)
+    shade02_data   = dim_stddev_n(dim_avg_n(dbz_cyclind(:,it,:,:,:),3),0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
