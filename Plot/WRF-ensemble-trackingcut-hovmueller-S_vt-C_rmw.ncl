@@ -29,7 +29,7 @@ begin
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
   SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = 24       ; number of skip time  
+  N_SKIPTIME    =  1       ; number of skip time  
 
   N_RADIUS      = 25       ; number of grids
   N_ANGLE       = 36       ; number of angle
@@ -259,25 +259,24 @@ begin
 
     shade01_opts = True
     shade01_opts = res
-    Config_vr_shade(shade01_opts)
+    Config_vt_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
-    Config_vt_contour(contour01_opts)
+    Config_vt_kyodo_contour(contour01_opts)
 
     vt_azimuth_mean = dim_avg(vt_cyclind(:,:,0,:,:))
-    shade01_data    = dim_avg_n(linmsg_n(vt_azimuth_mean,0,0),0)
+    shade01_data    = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0)
     contour01_data  = shade01_data 
     plots           = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour   = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
 
     vt_max_r   = new (n_timestep,"integer") 
-printVarSummary(shade01_data)
        do it =0,c_ttt-N_SKIPTIME
        vt_max_r(it) = maxind (shade01_data(it,:))    
        end do
-print(vt_max_r)
+
     plres = True
     plres@gsLineColor               = "grey"   ; Set the line color.
     plres@gsLineThicknessF          = 14.0
