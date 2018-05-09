@@ -153,6 +153,26 @@ RES@cnLevelSpacingF               =       5                ; set contour spacing
 
 end
 
+undef ( "Config_vt_kyodo_contour" )
+procedure Config_vt_kyodo_contour (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnLineColor                   = "black"                ; Set the line color
+RES@cnInfoLabelOn                 = False
+RES@cnLineThicknessF              =  12
+RES@gsnContourNegLineDashPattern  = 1                      ; sets negative contours to dash pattern 1
+RES@cnLineLabelInterval           = 1                      ; default = 2
+RES@cnLineLabelFontHeightF        = 0.025
+
+RES@cnLevelSelectionMode          = "ExplicitLevels"     ; set manual contour levels
+RES@cnLevels                      = (/ 17., 33.,44.,54./)   ; set levels
+RES@cnLineThicknessF              = 10
+RES@cnLineLabelFontHeightF        = 0.025
+end
+
 undef ( "Config_vt_shade" )
 procedure Config_vt_shade (  \
   RES[*]           : logical \
@@ -172,9 +192,9 @@ RES@lbTitleFontHeightF   = 0.025                             ; font height
 
 RES@cnFillPalette        = "hotcold_18lev"
 RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-RES@cnMinLevelValF       =      -20              ; set min contour level
-RES@cnMaxLevelValF       =       20              ; set max contour level
-RES@cnLevelSpacingF      =        4              ; set contour spacing
+RES@cnMinLevelValF       =      -50              ; set min contour level
+RES@cnMaxLevelValF       =       50              ; set max contour level
+RES@cnLevelSpacingF      =       10              ; set contour spacing
 
 end
 
