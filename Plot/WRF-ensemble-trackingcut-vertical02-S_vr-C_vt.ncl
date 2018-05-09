@@ -19,7 +19,8 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vr-C_rh/"+TY_NAME+"/"
+ ; OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vr-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_vr-C_rh/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_vr-C_vt-v1-"
 
@@ -28,7 +29,7 @@ begin
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
   SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = 24       ; number of skip time  
+  N_SKIPTIME    = 6       ; number of skip time  
 
   RADIUS_KM     = 200      ; kilometer
   N_RADIUS      = 25       ; number of grids

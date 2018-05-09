@@ -54,10 +54,10 @@ RES@lbTitleAngleF        = 90.                               ; title angle
 RES@lbTitleFontHeightF   = 0.025                             ; font height
 
 RES@cnFillPalette        = "precip2_17lev"
-;RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-;RES@cnMinLevelValF       =       5              ; set min contour level
-;RES@cnMaxLevelValF       =      55              ; set max contour level
-;RES@cnLevelSpacingF      =       5              ; set contour spacing
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =       2              ; set min contour level
+RES@cnMaxLevelValF       =      22              ; set max contour level
+RES@cnLevelSpacingF      =       2              ; set contour spacing
 
 end
 
