@@ -174,71 +174,70 @@ begin
 
       wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + (ZLEVS)+"m")
 
-        res_title = True
-        res_title@gsnLeftString       = "INIT; " + times(0)
-        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
+      res_title = True
+      res_title@gsnLeftString       = "INIT; " + times(0)
+      res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
-        res_basis = True
-        res_basis@gsnDraw             = False
-        res_basis@gsnFrame            = False
-        res_basis@gsnMaximize         = True
-        res_basis@vpWidthF            = 0.50
-        res_basis@vpHeightF           = 0.75
-        res_basis@vpXF                = 0.2
-        res_basis@vpYF                = 0.9
+      res_basis = True
+      res_basis@gsnDraw             = False
+      res_basis@gsnFrame            = False
+      res_basis@gsnMaximize         = True
+      res_basis@vpWidthF            = 0.50
+      res_basis@vpHeightF           = 0.75
+      res_basis@vpXF                = 0.2
+      res_basis@vpYF                = 0.9
 
-        res_basis@tiXAxisString       = "Radius from the centre (km)" 
-        res_basis@tiXAxisFontHeightF  = 0.025                             ; default 
-        res_basis@tmXBMode            = "Explicit"
-        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
-        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
-        res_basis@tmXBLabelFontHeightF= 0.03
+      res_basis@tiXAxisString       = "Radius from the centre (km)" 
+      res_basis@tiXAxisFontHeightF  = 0.025                             ; default 
+      res_basis@tmXBMode            = "Explicit"
+      res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
+      res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+      res_basis@tmXBLabelFontHeightF= 0.03
 
-        res_basis@tiYAxisString       = "Forecast time(hour)" 
-        res_basis@tiYAxisFontHeightF  = 0.025                             ; default 
-        res_basis@tmYLMode            = "Manual"
-        res_basis@tmYLTickStartF      = 0
-        res_basis@tmYLTickSpacingF    = 24
-        res_basis@tmYLTickEndF        = c_ttt-1
-        res_basis@tmYLLabelFontHeightF= 0.02;
+      res_basis@tiYAxisString       = "Forecast time(hour)" 
+      res_basis@tiYAxisFontHeightF  = 0.025                             ; default 
+      res_basis@tmYLMode            = "Manual"
+      res_basis@tmYLTickStartF      = 0
+      res_basis@tmYLTickSpacingF    = 24
+      res_basis@tmYLTickEndF        = c_ttt-N_SKIPTIME
+      res_basis@tmYLLabelFontHeightF= 0.02;
 
-        res = True
-        res = res_basis
-        res = res_title
+      res = True
+      res = res_basis
+      res = res_title
 
-        shade01_opts = True
-        shade01_opts = res
-        Config_vt_shade(shade01_opts)
+      shade01_opts = True
+      shade01_opts = res
+      Config_vt_shade(shade01_opts)
 
-        contour01_opts = True
-        contour01_opts = res
-        Config_vt_kyodo_contour(contour01_opts)
+      contour01_opts = True
+      contour01_opts = res
+      Config_vt_kyodo_contour(contour01_opts)
 
-        shade01_data   = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
-        shade01_data   = linmsg_n(shade01_data,0,0)
-        contour01_data = shade01_data
+      shade01_data   = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
+      shade01_data   = linmsg_n(shade01_data,0,0)
+      contour01_data = shade01_data
 
-        plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-        plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-        overlay(plots,plots_contour)
+      plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+      plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+      overlay(plots,plots_contour)
 
-         do it =0,c_ttt-N_SKIPTIME
-         vt_max_r(it) = maxind (shade01_data(it,:))    
-         end do
+       do it =0,c_ttt-N_SKIPTIME
+       vt_max_r(it) = maxind (shade01_data(it,:))    
+       end do
 
-        plres = True
-        plres@gsLineColor               = "grey"   ; Set the line color.
-        plres@gsLineThicknessF          = 14.0
-        contour_rmw = gsn_add_polyline  (wks01, plots, vt_max_r , ispan(0,c_ttt-1,1), plres)
+      plres = True
+      plres@gsLineColor               = "grey"   ; Set the line color.
+      plres@gsLineThicknessF          = 14.0
+      contour_rmw = gsn_add_polyline  (wks01, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
 
-        draw(plots)
-        frame(wks01)
+      draw(plots)
+      frame(wks01)
 
-
-    delete(timesd)
+      delete(timesd)
 
     end do ; mmm loop
-exit
+
   if(SWITCH_MEAN .eq."ON") then
   print("Now start to drawing ENSEMBLE MEAN.")  
 
@@ -246,26 +245,13 @@ exit
 ; create plot of ENSEMBLE MEAN and SPREAD
 ;************************************************
 
-    do it = 0,c_ttt-N_SKIPTIME, N_SKIPTIME
-
-    print("Now drawing time is "+times(it))
 ; Set some basic resources
 
-    if(it.lt.10)then
-    ft_time = "FT00"+it
-    else if (it.ge.10.and.it.lt.100)then
-    ft_time   = "FT0"+it
-    else if (it.ge.100)then
-    ft_time   = "FT"+it
-    end if 
-    end if
-    end if
-
-    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(it))
-    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
+    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + (ZLEVS)+"m")
+;    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
 
     res_title = True
-    res_title@gsnLeftString       = ft_time + ", " + times(it)
+    res_title@gsnLeftString       = "INIT; " + times(0)
     res_title@gsnRightString      = "Mem; Mean"
        
     res = res_basis
@@ -279,12 +265,24 @@ exit
     contour01_opts = res
     Config_vt_contour(contour01_opts)
 
-    vr_azimuth_mean = dim_avg_n(vr_cyclind(:,it,:,:,:),3)
-    shade01_data   = dim_avg_n(vr_azimuth_mean,0)
-    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
-    plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-    plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+    vt_azimuth_mean = dim_avg(vt_cyclind(:,:,0,:,:))
+    shade01_data    = dim_avg_n(linmsg_n(vt_azimuth_mean,0,0),0)
+    contour01_data  = shade01_data 
+    plots           = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+    plots_contour   = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
+
+    vt_max_r   = new (n_timestep,"integer") 
+printVarSummary(shade01_data)
+       do it =0,c_ttt-N_SKIPTIME
+       vt_max_r(it) = maxind (shade01_data(it,:))    
+       end do
+print(vt_max_r)
+    plres = True
+    plres@gsLineColor               = "grey"   ; Set the line color.
+    plres@gsLineThicknessF          = 14.0
+    contour_rmw = gsn_add_polyline  (wks01, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
+
     draw(plots)
     frame(wks01)
   
@@ -292,15 +290,13 @@ exit
     res = res_basis
     res = res_title
 
-    shade02_opts = True
-    shade02_opts = res
-    Config_vrSprd_shade(shade02_opts)
-    shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
-    plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
-    draw(plots)
-    frame(wks02)
-
-    end do ;;;it loop
+    ;shade02_opts = True
+    ;shade02_opts = res
+    ;Config_vrSprd_shade(shade02_opts)
+    ;shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
+    ;plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
+    ;draw(plots)
+    ;frame(wks02)
 
   end if
 
