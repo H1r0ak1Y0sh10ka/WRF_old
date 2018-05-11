@@ -19,7 +19,10 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  ;OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_dbz-C_rh/"+TY_NAME+"/"
+ ; OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vr-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_vr-C_rh/"+TY_NAME+"/"
+
+  OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_vr-C_vt-v1-"
 
   INIT = (/"20160106"/)     ; initial time/date
    
@@ -72,18 +75,20 @@ begin
     nfields     = dimsizes(field_names)
 ;---We're going to read the whole file as a 2D array of strings
     fields = new((/nfields,nlines/),string)
-    c_ilat = new ( (/nlines/),"integer")
-    c_ilon = new ( (/nlines/),"integer")
-    c_lat  = new ( (/nlines/),"float")
-    c_lon  = new ( (/nlines/),"float")
+    if(mmm.eq.0)then
+    c_ilat  = new ( (/n_MEMBER,nlines/),"integer")
+    c_ilon  = new ( (/n_MEMBER,nlines/),"integer")
+    c_lat  = new ( (/n_MEMBER,nlines/),"float")
+    c_lon  = new ( (/n_MEMBER,nlines/),"float")
+    end if
 
 ;---ReMEMBER that fields start at 1, not 0.
       do nf=0,nfields-1
       fields(nf,:) = str_get_field(lines,nf+1,delim)    
-      c_ilat(:) = stringtointeger(fields(2,:))
-      c_lat(:)  = stringtofloat(fields(4,:))
-      c_ilon(:) = stringtointeger(fields(3,:))
-      c_lon(:)  = stringtofloat(fields(5,:))
+      c_ilat(mmm,:) = stringtointeger(fields(2,:))
+      c_lat(mmm,:)  = stringtofloat(fields(4,:))
+      c_ilon(mmm,:) = stringtointeger(fields(3,:))
+      c_lon(mmm,:)  = stringtofloat(fields(5,:))
       end do
 
     filw = systemfunc("ls " + WRF_DIRC + INIT(nnn) + "/" + MEMBER(mmm) + "/wrfout*")  ; or WRF_*grb
@@ -112,15 +117,15 @@ begin
       end do ; iii loop
 
     times      = new ( (/n_timestep/),"string")
-    dbz        = new ( (/nz,nlat,nlon/),"float")
     zz         = new ( (/nz,nlat,nlon/),"float")
-    rh         = new ( (/nz,nlat,nlon/),"float")
+    uu         = new ( (/nz,nlat,nlon/),"float")
+    vv         = new ( (/nz,nlat,nlon/),"float")
 
-    dbz_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
-    rh_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
-    if(isdefined("dbz_cyclind").eq.False)then
-    dbz_cyclind= new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vr_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    vt_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    if(mmm.eq.0)then
+    vr_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vt_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
     
     c_ttt=0
@@ -134,18 +139,19 @@ begin
 
         do it = 0,n_times-1, N_SKIPTIME
         times(c_ttt) = timesd(it)                             ; get all times in the file
-        dbz(:,:,:)   = wrf_user_getvar(f[iii],"dbz",it)       ; dbz
-        rh(:,:,:)    = wrf_user_getvar(f[iii],"rh",it)        ; rh
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-      
-        dbz_levs(:,:,:) = wrf_user_intrp3d(dbz(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        rh_levs(:,:,:)  = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
- 
-        dammy = rectangular2polar(dbz_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        dbz_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
+        vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
+        vComps = calcWindComponents(uu,vv,lat,lon,c_lat(mmm,c_ttt),c_lon(mmm,c_ttt))
+        vr_levs(:,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", zlevs,0.,False)
+        vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
+        delete(vComps)
+
+        dammy = rectangular2polar(vr_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        vr_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        rh_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(mmm,c_ttt),c_ilon(mmm,c_ttt))
+        vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
 
         print("Now drawing time is "+times(c_ttt))
@@ -164,7 +170,7 @@ begin
         end if
         end if
 
-        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(c_ttt))
 
         res_title = True
         res_title@gsnLeftString       = ft_time + ", " + times(c_ttt)
@@ -179,17 +185,19 @@ begin
 
         Y_LABEL =  zlevs*0.001 
 
-        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tiXAxisString       = "Radius from the centre (km)" 
+        res_basis@tiXAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmXBMode            = "Explicit"
         res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
         res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
-        res_basis@tmXBLabelFontHeightF= 0.02
+        res_basis@tmXBLabelFontHeightF= 0.03
 
-        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tiYAxisString       = "Height(km)"
+        res_basis@tiYAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmYLMode            = "Explicit"
         res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
         res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
-        res_basis@tmYLLabelFontHeightF= 0.02
+        res_basis@tmYLLabelFontHeightF= 0.03
 
         res = True
         res = res_basis
@@ -197,14 +205,14 @@ begin
 
         shade01_opts = True
         shade01_opts = res
-        Config_dbz_shade(shade01_opts)
+        Config_vr_shade(shade01_opts)
 
         contour01_opts = True
         contour01_opts = res
-        Config_rh_contour(contour01_opts)
+        Config_vt_contour(contour01_opts)
         
-        shade01_data   = dim_avg_n(dbz_cyclind(mmm,c_ttt,:,:,:),2)
-        contour01_data = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
+        contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
         overlay(plots,plots_contour)
@@ -242,8 +250,8 @@ begin
     end if
     end if
 
-    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(it))
-    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/WRF-trackingcut-vertical02-S_dbz-C_rh-v1-" + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
+    wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(it))
+    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
 
     res_title = True
     res_title@gsnLeftString       = ft_time + ", " + times(it)
@@ -254,14 +262,15 @@ begin
 
     shade01_opts = True
     shade01_opts = res
-    Config_dbz_shade(shade01_opts)
+    Config_vr_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
-    Config_rh_contour(contour01_opts)
-       
-    shade01_data   = dim_avg_n(dim_avg_n(dbz_cyclind(:,it,:,:,:),3),0)
-    contour01_data = dim_avg_n(dim_avg_n(rh_cyclind(:,it,:,:,:),3),0)
+    Config_vt_contour(contour01_opts)
+
+    vr_azimuth_mean = dim_avg_n(vr_cyclind(:,it,:,:,:),3)
+    shade01_data   = dim_avg_n(vr_azimuth_mean,0)
+    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
     plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
@@ -274,9 +283,8 @@ begin
 
     shade02_opts = True
     shade02_opts = res
-    Config_dbzSprd_shade(shade02_opts)
-
-    shade02_data   = dim_stddev_n(dim_avg_n(dbz_cyclind(:,it,:,:,:),3),0)
+    Config_vrSprd_shade(shade02_opts)
+    shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
@@ -290,5 +298,7 @@ begin
 exit
 
 end
+
+
 
 
