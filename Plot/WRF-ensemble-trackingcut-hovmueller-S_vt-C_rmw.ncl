@@ -1,5 +1,13 @@
-
-; Example of using panels with WRF data
+; This file is Draw Configuration.
+; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
+; History:
+; 12/05/2018 - 1st released
+;
+; This script calcurate tangential wind and radial wind for hovmueller diagram.
+; WRF experimental result and track data required.
+; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
+;
+;=====================================================================================
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
@@ -8,9 +16,6 @@ load "./AnalysisTyphoonTools.ncl"
 load "./Tools.ncl"
 load "./DrawConfiguration.ncl"
 begin
-;
-; The WRF ARW input file.  
-; This needs to have a ".nc" appended, so just do it.
 
 ;********** Part - Enter Constant, Directory, NAME and so on **********
 
@@ -19,12 +24,11 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
- ; OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vt-C_rmw/"+TY_NAME+"/"
-  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_vt-C_rmw/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vt-C_rmw/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_vt-C_rmw-v1-"
 
-  INIT = (/"20160106"/)     ; initial time/date
+  INIT = (/"20160101","20160102","20160103","20160104","20160105","20160106"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
   SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
@@ -175,7 +179,7 @@ begin
       wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + (ZLEVS)+"m")
 
       res_title = True
-      res_title@gsnLeftString       = "INIT; " + times(0)
+      res_title@gsnLeftString       = "Case; "+ TY_NAME + " Height; " + ZLEVS*0.001 + "km ~C~Init; " + times(0)
       res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
       res_basis = True
@@ -200,7 +204,7 @@ begin
       res_basis@tmYLTickStartF      = 0
       res_basis@tmYLTickSpacingF    = 24
       res_basis@tmYLTickEndF        = c_ttt-N_SKIPTIME
-      res_basis@tmYLLabelFontHeightF= 0.02;
+      res_basis@tmYLLabelFontHeightF= 0.03;
 
       res = True
       res = res_basis
@@ -248,10 +252,10 @@ begin
 ; Set some basic resources
 
     wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + (ZLEVS)+"m")
-;    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
+    wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + (ZLEVS)+"m")
 
     res_title = True
-    res_title@gsnLeftString       = "INIT; " + times(0)
+    res_title@gsnLeftString       = "Case; "+ TY_NAME + " Height; " + ZLEVS*0.001 + "km ~C~Init; " + times(0)
     res_title@gsnRightString      = "Mem; Mean"
        
     res = res_basis
@@ -289,13 +293,16 @@ begin
     res = res_basis
     res = res_title
 
-    ;shade02_opts = True
-    ;shade02_opts = res
-    ;Config_vrSprd_shade(shade02_opts)
-    ;shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
-    ;plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
-    ;draw(plots)
-    ;frame(wks02)
+    shade02_opts = True
+    shade02_opts = res
+    Config_vtSprd_shade(shade02_opts)
+    shade02_data   = dim_stddev_n(linmsg_n(vt_azimuth_mean,0,1),0)
+    plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
+
+    contour_rmw = gsn_add_polyline  (wks02, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
+
+    draw(plots)
+    frame(wks02)
 
   end if
 
