@@ -223,6 +223,31 @@ RES@cnLevelSpacingF      =       1              ; set contour spacing
 
 end
 
+undef ( "Config_rv_shade" )
+procedure Config_rv_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "hotcold_18lev"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =     -0.003           ; set min contour level
+RES@cnMaxLevelValF       =      0.003           ; set max contour level
+RES@cnLevelSpacingF      =      0.0005          ; set contour spacing
+
+end
+
 undef ( "Config_h_diabatic_shade" )
 procedure Config_h_diabatic_shade (  \
   RES[*]           : logical \
