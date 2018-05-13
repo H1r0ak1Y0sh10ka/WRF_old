@@ -10,11 +10,11 @@ begin
 
   init_YYYY = "2016"
   init_M    = 1
-  init_D    = 3
+  init_D    = 6
   init_H    = 0
   init_plus = "" ; ex. -p01deg
 
-  para = (/ "dspddt"/)    ; spd, cape ,dcapedt,dspddt
+  para = (/ "spd"/)    ; spd, cape ,dcapedt,dspddt
   npara    = dimsizes(para)
 
 ; We generate plots, but what kind do we prefer?
@@ -23,7 +23,7 @@ begin
 ; type = "eps"
  type = "png"
 
-  plot_type  = 2 ;;;; 0 is max and min with mean and best track.
+  plot_type  = 0 ;;;; 0 is max and min with mean and best track.
                  ;;;; 1 is all members' contours without best track.
                  ;;;; 2 is the ensemble number's plots by emphasis of each member.
 
