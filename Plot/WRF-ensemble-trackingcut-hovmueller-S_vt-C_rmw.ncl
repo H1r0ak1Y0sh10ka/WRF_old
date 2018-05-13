@@ -28,17 +28,17 @@ begin
 
   OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_vt-C_rmw-v1-"
 
-  INIT = (/"20160101","20160102","20160103","20160104","20160105","20160106"/)     ; initial time/date
+  INIT = stringtointeger(systemfunc("read ifland; echo $ifland"));(/"20160103"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
+  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ; ON is draw, OFF is not.
 
-  N_SKIPTIME    =  1       ; number of skip time  
+  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))      ; number of skip time  
 
   N_RADIUS      = 25       ; number of grids
   N_ANGLE       = 36       ; number of angle
   DIS           = 10000    ; model resolution (meter)
-  ZLEVS         = 1000     ; height (meter)
+  ZLEVS         = 500     ; height (meter)
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
