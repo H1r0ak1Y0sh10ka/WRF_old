@@ -1,10 +1,10 @@
-; This file is Draw Configuration.
+; This file is Analysis and Draw program.
 ; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 12/05/2018 - 1st released
+; 15/05/2018 - 1st released
 ;
-; This script calcurate relative vorticity for hovmueller diagram.
-; WRF experimental result and track data required.
+; This script calcurate relative vorticity for hovmueller diagram with tangential wind.
+; WRF experimental result and track data are required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
 ;=====================================================================================
@@ -142,7 +142,11 @@ begin
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
         uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
-        rv(:,:,:)    = uv2vr_cfd (uu,vv,lat,lon, 3)
+        rv(:,:,:)    = uv2vr_cfd (uu,vv,lat,lon, 3)/10^-4
+        copy_VarMeta( uu, rv )
+        rv@long_name = "Relative Vorticity"
+        rv@units     = "10^-4 s-1"
+
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
 
         if(n_ZLEVS.eq.1)then
@@ -222,14 +226,15 @@ begin
 
       shade01_data   = dim_avg_n(rv_cyclind(mmm,:,0,:,:),2)
       shade01_data   = linmsg_n(shade01_data,0,0)
-      contour01_data = shade01_data
+      contour01_data = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
+      contour01_data = linmsg_n(contour01_data,0,0)
 
       plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
       plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
       overlay(plots,plots_contour)
 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (shade01_data(it,:))    
+       vt_max_r(it) = maxind (contour01_data(it,:))    
        end do
 
       plres = True
@@ -273,14 +278,15 @@ begin
 
     rv_azimuth_mean = dim_avg(rv_cyclind(:,:,0,:,:))
     shade01_data    = dim_avg_n(linmsg_n(rv_azimuth_mean,0,1),0)
-    contour01_data  = shade01_data 
+    vt_azimuth_mean = dim_avg(vt_cyclind(:,:,0,:,:))
+    coutour01_data  = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0) 
     plots           = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour   = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
 
     vt_max_r   = new (n_timestep,"integer") 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (shade01_data(it,:))    
+       vt_max_r(it) = maxind (contour01_data(it,:))    
        end do
 
     plres = True
@@ -297,7 +303,7 @@ begin
 
     shade02_opts = True
     shade02_opts = res
-    Config_vtSprd_shade(shade02_opts)
+    Config_rvSprd_shade(shade02_opts)
     shade02_data   = dim_stddev_n(linmsg_n(rv_azimuth_mean,0,1),0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
 
