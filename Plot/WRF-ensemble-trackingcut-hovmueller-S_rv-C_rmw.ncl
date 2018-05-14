@@ -1,10 +1,10 @@
-; This file is Draw Configuration.
+; This file is Analysis and Draw program.
 ; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 12/05/2018 - 1st released
+; 15/05/2018 - 1st released
 ;
-; This script calcurate tangential wind and radial wind for hovmueller diagram.
-; WRF experimental result and track data required.
+; This script calcurate relative vorticity for hovmueller diagram with tangential wind.
+; WRF experimental result and track data are required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
 ;=====================================================================================
@@ -24,16 +24,16 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_vt-C_rmw/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_rv-C_rmw/"+TY_NAME+"/"
 
-  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_vt-C_rmw-v1-"
+  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_rv-C_rmw-v1-"
 
-  INIT = stringtointeger(systemfunc("read ifland; echo $ifland"));(/"20160103"/)     ; initial time/date
+  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/"20160103"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ; ON is draw, OFF is not.
+  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland"))       ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))      ; number of skip time  
+  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))       ; number of skip time  
 
   N_RADIUS      = 25       ; number of grids
   N_ANGLE       = 36       ; number of angle
@@ -118,11 +118,12 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     uu         = new ( (/nz,nlat,nlon/),"float")
     vv         = new ( (/nz,nlat,nlon/),"float")
+    rv         = new ( (/nz,nlat,nlon/),"float")
 
-    vr_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
     vt_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
+    rv_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
     if(isdefined("vt_cyclind").eq.False)then
-    vr_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rv_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
     vt_max_r   = new (n_timestep,"integer") 
@@ -141,24 +142,29 @@ begin
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
         uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
+        rv(:,:,:)    = uv2vr_cfd (uu,vv,lat,lon, 3)/10^-4
+        copy_VarMeta( uu, rv )
+        rv@long_name = "Relative Vorticity"
+        rv@units     = "10^-4 s-1"
+
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
 
         if(n_ZLEVS.eq.1)then
-        vr_levs(0,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", ZLEVS,0.,False)
+        rv_levs(0,:,:)  = wrf_user_intrp3d(rv,zz(:,:,:),"h", ZLEVS,0.,False)
         vt_levs(0,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
         delete(vComps)
-        dammy = rectangular2polar_test(vr_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        vr_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar_test(rv_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rv_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         dammy = rectangular2polar_test(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         else
-        vr_levs(:,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", ZLEVS,0.,False)
+        rv_levs(:,:,:)  = wrf_user_intrp3d(rv,zz(:,:,:),"h", ZLEVS,0.,False)
         vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
         delete(vComps)
-        dammy = rectangular2polar(vr_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        vr_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar(rv_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rv_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
@@ -212,22 +218,23 @@ begin
 
       shade01_opts = True
       shade01_opts = res
-      Config_vt_shade(shade01_opts)
+      Config_rv_shade(shade01_opts)
 
       contour01_opts = True
       contour01_opts = res
       Config_vt_kyodo_contour(contour01_opts)
 
-      shade01_data   = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
+      shade01_data   = dim_avg_n(rv_cyclind(mmm,:,0,:,:),2)
       shade01_data   = linmsg_n(shade01_data,0,0)
-      contour01_data = shade01_data
+      contour01_data = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
+      contour01_data = linmsg_n(contour01_data,0,0)
 
       plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
       plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
       overlay(plots,plots_contour)
 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (contour01_data(it,:))
+       vt_max_r(it) = maxind (contour01_data(it,:))    
        end do
 
       plres = True
@@ -263,22 +270,23 @@ begin
 
     shade01_opts = True
     shade01_opts = res
-    Config_vt_shade(shade01_opts)
+    Config_rv_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
     Config_vt_kyodo_contour(contour01_opts)
 
+    rv_azimuth_mean = dim_avg(rv_cyclind(:,:,0,:,:))
+    shade01_data    = dim_avg_n(linmsg_n(rv_azimuth_mean,0,1),0)
     vt_azimuth_mean = dim_avg(vt_cyclind(:,:,0,:,:))
-    shade01_data    = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0)
-    contour01_data  = shade01_data 
+    coutour01_data  = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0) 
     plots           = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour   = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
 
     vt_max_r   = new (n_timestep,"integer") 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (shade01_data(it,:))    
+       vt_max_r(it) = maxind (contour01_data(it,:))    
        end do
 
     plres = True
@@ -295,8 +303,8 @@ begin
 
     shade02_opts = True
     shade02_opts = res
-    Config_vtSprd_shade(shade02_opts)
-    shade02_data   = dim_stddev_n(linmsg_n(vt_azimuth_mean,0,1),0)
+    Config_rvSprd_shade(shade02_opts)
+    shade02_data   = dim_stddev_n(linmsg_n(rv_azimuth_mean,0,1),0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
 
     contour_rmw = gsn_add_polyline  (wks02, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
