@@ -227,7 +227,7 @@ begin
       overlay(plots,plots_contour)
 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (shade01_data(it,:))    
+       vt_max_r(it) = maxind (contour01_data(it,:))
        end do
 
       plres = True
