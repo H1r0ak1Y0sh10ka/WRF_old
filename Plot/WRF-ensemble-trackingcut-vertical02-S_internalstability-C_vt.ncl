@@ -19,6 +19,10 @@ begin
 
 ;********** Part - Enter Constant, Directory, NAME and so on **********
 
+  ;NAMELIST = "./namelist.txt"
+  ;TY_NAME  = keyword_values( NAMELIST, "TY_NAME", "string")
+  ;print(TY_NAME)
+  ;exit
   TY_NAME = "PALI"          ; case name
 
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
@@ -39,8 +43,8 @@ begin
   N_RADIUS      = 25       ; number of grids
   N_ANGLE       = 36       ; number of angle
   DIS           = 10000    ; model resolution (meter)
-  ZTOP           = 20000    ; meter
-  N_ZLEVS        = 101      ; number of vertical
+  ZTOP          = 20000    ; meter
+  N_ZLEVS       = 101      ; number of vertical
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 

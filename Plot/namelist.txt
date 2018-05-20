@@ -1,0 +1,4 @@
+
+  TY_NAME = "PALI"          ; case name
+  WRF_DIRC   = "/Volumes/Yoshi-HDD01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/"
