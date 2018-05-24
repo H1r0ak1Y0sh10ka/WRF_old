@@ -127,11 +127,11 @@ begin
     uu         = new ( (/nz,nlat,nlon/),"float")
     vv         = new ( (/nz,nlat,nlon/),"float")
 
-    instab_levs= new ( (/N_ZLEVS,nlat,nlon/),"float")  ;;; internal stability
     vt_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
     if(mmm.eq.0)then
-    ff_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    ff_cyclind = new ( (/n_MEMBER,n_timestep,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    instab_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1/),"float")  ;;; internal stability
     end if
     
     c_ttt=0
@@ -151,18 +151,24 @@ begin
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
         vt_levs(:,:,:) = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
         delete(vComps)
-        
+
         dammy = rectangular2polar_test(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         dammy = rectangular2polar_test(ff,N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-;        ff_cyclind(mmm,c_ttt,:,:,:) 
-         ff_cyclind(mmm,c_ttt,0,:,:) = dammy[0]
-
+        dammy02 = dammy[0]
+        ff_cyclind(mmm,c_ttt,:,:) =  dammy02(0,:,:) 
         delete(dammy)
-      printVarSummary(ff_cyclind)
-      printVarSummary(test)
+        delete(dammy02)
 
+        vt_var = dim_avg( vt_cyclind(mmm,c_ttt,:,:,:))
+        r = fspan(0, N_RADIUS*DIS, N_RADIUS+1 )
+        dvt_vardr = center_finite_diff_n (vt_var,DIS,False,0,1)
+        do iz = 0, N_ZLEVS-1,1
+        instab_cyclind(mmm,c_ttt,iz,:) = vt_var(iz,:)/r(:)
+        end do 
+          
+      
         print("Now drawing time is "+times(c_ttt))
         exit
 ;************************************************
