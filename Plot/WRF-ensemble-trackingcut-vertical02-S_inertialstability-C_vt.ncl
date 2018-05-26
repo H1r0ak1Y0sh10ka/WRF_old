@@ -165,12 +165,12 @@ begin
         r = fspan(0, N_RADIUS*DIS, N_RADIUS+1 )
         dvt_vardr = center_finite_diff_n (vt_var,DIS,False,0,1)
         do iz = 0, N_ZLEVS-1,1
-        instab_cyclind(mmm,c_ttt,iz,:) = vt_var(iz,:)/r(:)
+        instab_cyclind(mmm,c_ttt,iz,1:N_RADIUS) = (( ff_cyclind(mmm,c_ttt,1:N_RADIUS,0)+ (vt_var(iz,1:N_RADIUS)/r(1:N_RADIUS)) + dvt_vardr(iz,1:N_RADIUS) )* ( ff_cyclind(mmm,c_ttt,1:N_RADIUS,0) + 2*(vt_var(iz,1:N_RADIUS)/r(1:N_RADIUS))))
         end do 
-          
-      
+        instab_cyclind(mmm,c_ttt,:,:) = sqrt( where( instab_cyclind(mmm,c_ttt,:,:) .lt.0, instab_cyclind@_FillValue,instab_cyclind(mmm,c_ttt,:,:) ) )*10^5
+
         print("Now drawing time is "+times(c_ttt))
-        exit
+
 ;************************************************
 ; create plot of EACH MEMBER
 ;************************************************
@@ -221,13 +221,13 @@ begin
 
         shade01_opts = True
         shade01_opts = res
-        Config_vr_shade(shade01_opts)
+        Config_inertial_stability_shade(shade01_opts)
 
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
         
-        shade01_data   = dim_avg_n(vr_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = instab_cyclind(mmm,c_ttt,:,:)
         contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
