@@ -71,6 +71,8 @@ pi            = 4.0*atan(1.0)
     end do ; nr loop
     
 data_cyclind@units = data@units
+data_cyclind!1="radius" 
+data_cyclind!2="theta" 
 return( [/ data_cyclind /] )
 
 end
@@ -137,6 +139,8 @@ pi            = 4.0*atan(1.0)
     end do ; nr loop
     
 data_cyclind@units = data@units
+data_cyclind!1="radius" 
+data_cyclind!2="theta" 
 return( [/ data_cyclind /] )
 
 end
