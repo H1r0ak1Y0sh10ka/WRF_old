@@ -1,9 +1,9 @@
 ; This file is Draw Configuration.
 ; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 12/05/2018 - 1st released
+; 29/05/2018 - 1st released
 ;
-; This script calcurate tangential wind and radial wind for hovmueller diagram.
+; This script calcurate inertial stability and tangential wind for hovmueller diagram.
 ; WRF experimental result and track data required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
@@ -28,8 +28,8 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
- ; OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_internalstability-C_vt/"+TY_NAME+"/"
-  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_internalstability-C_vt/"+TY_NAME+"/"
+ ; OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_inertialstability-C_vt/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_inertialstability-C_vt/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_vr-C_vt-v1-"
 
@@ -278,14 +278,13 @@ begin
 
     shade01_opts = True
     shade01_opts = res
-    Config_vr_shade(shade01_opts)
+    Config_inertial_stability_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
     Config_vt_contour(contour01_opts)
 
-    vr_azimuth_mean = dim_avg_n(vr_cyclind(:,it,:,:,:),3)
-    shade01_data   = dim_avg_n(vr_azimuth_mean,0)
+    shade01_data   = dim_avg_n(instab_cyclind(:,it,:,:),0)
     contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
     plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
@@ -299,8 +298,8 @@ begin
 
     shade02_opts = True
     shade02_opts = res
-    Config_vrSprd_shade(shade02_opts)
-    shade02_data   = dim_stddev_n(vr_azimuth_mean,0)
+    Config_inertial_stabilitySprd_shade(shade02_opts)
+    shade02_data   = dim_stddev_n(instab_cyclind(:,it,:,:),0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
     draw(plots)
     frame(wks02)
