@@ -10,11 +10,11 @@ begin
 
   init_YYYY = "2016"
   init_M    = 1
-  init_D    = 6
+  init_D    = 3
   init_H    = 0
   init_plus = "" ; ex. -p01deg
 
-  para = (/ "spd"/)    ; spd, cape ,dcapedt,dspddt
+  para = (/ "cape"/)    ; spd, cape ,dcapedt,dspddt
   npara    = dimsizes(para)
 
 ; We generate plots, but what kind do we prefer?
@@ -23,9 +23,10 @@ begin
 ; type = "eps"
  type = "png"
 
-  plot_type  = 0 ;;;; 0 is max and min with mean and best track.
+  plot_type  = 3 ;;;; 0 is max and min with mean and best track.
                  ;;;; 1 is all members' contours without best track.
                  ;;;; 2 is the ensemble number's plots by emphasis of each member.
+                 ;;;; 3 is the ensemble number's plots by emphasis of each member.
 
   ibtracs_dir  = "/Volumes/HDD01/research/analysis/track/ibtracks/"
   ibtracs_data = "2016005N02187.ibtracs."
@@ -359,7 +360,68 @@ delete(fields)
 else if(plot_type.eq.2)then ;******************************************************************************************************************************
   print("plot_type is 2.")
 
+else if(plot_type.eq.3)then ;******************************************************************************************************************************
+  print("plot_type is 3.")
 
+  b_opts = True
+  b_opts = res01
+
+;*****************************************************   
+; CALCULATE MIN & MAX
+;***************************************************** 
+  mnmx      = new ((/2,timestep/), float)
+  mnmx(0,:) = dim_min_n(data(nnn,:,:),0)
+  mnmx(1,:) = dim_max_n(data(nnn,:,:),0)
+
+;*****************************************************   
+; CALCULATE RSME & BEST MEMBER
+;***************************************************** 
+
+  do ii = 0,mmm-1 ,1
+  if(ii.eq.9)then
+  me_opts@xyLineColor           = "Blue"
+  me_opts@xyLineThicknessF      = 5.0
+  plots_member = gsn_csm_xy(wks01,x,data(0,ii,:),me_opts)
+  print(dim_sum(data(0,ii,48:96)))
+  print(dim_sum(data(0,ii,96:144)))
+
+  overlay(plots_mean,plots_member)
+    delete(plots_member)
+  end if
+  end do
+
+  delete( me_opts@xyLineColor  )
+  delete( me_opts@xyLineThicknessF   )
+
+  me_opts@gsnXYFillColors          = "lightgray"
+  me_opts@xyLineColor     = -1                           ; We don't want the line, so make it transparent.
+  me_opts@xyMonoLineColor    = False             ; want colored lines
+  plots_member = gsn_csm_xy(wks01,x,mnmx(0:1,:),me_opts)
+  overlay(plots_mean,plots_member)
+
+;----------------------------------------------------------------------
+; Code for customizing a legend via simple_legend.
+;----------------------------------------------------------------------
+
+;---Create three resource lists required for simple_legend
+  gres     = True     ; legend position
+  lineres  = True     ; legend lines
+  textres  = True     ; legend labels
+
+  gres@Position             = "Bottom"
+  gres@YPosPercent          =  5.5      ; from the bottom
+  gres@XPosPercent          =  2.5      ; move to the right side
+  lineres@lgLineThicknesses = 5.0      ; line thicknesses
+  lineres@lgDashIndexes = (/0,2,0,0,0/)                   ; line types
+  lineres@LineLengthPercent = 9.       ; expressed as %, 0->100, length of line
+
+;---Attach legend to first plot
+  textres@lgLabels     = (/"Ensemble mean","Ensemble members","Best member"/)
+  lineres@lgLineColors =  (/"black", "lightgray","Blue"/)
+
+  plot_legend = simple_legend(wks01,plots_mean,gres,lineres,textres)
+
+end if    ;******************************************************************************************************************************
 end if   ;******************************************************************************************************************************
 end if   ;******************************************************************************************************************************
 end if   ;******************************************************************************************************************************
