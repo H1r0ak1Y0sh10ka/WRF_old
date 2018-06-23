@@ -298,6 +298,56 @@ RES@cnLevelSpacingF      =       1            ; set contour spacing
 
 end
 
+undef ( "Config_lh_shade" )
+procedure Config_lh_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "WhiteYellowOrangeRed"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =       50              ; set min contour level
+RES@cnMaxLevelValF       =      550             ; set max contour level
+RES@cnLevelSpacingF      =       50              ; set contour spacing
+
+end
+
+undef ( "Config_lhSprd_shade" )
+procedure Config_lhSprd_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                            ; font height
+
+RES@cnFillPalette        = "precip2_17lev"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =      20              ; set min contour level
+RES@cnMaxLevelValF       =     220              ; set max contour level
+RES@cnLevelSpacingF      =      20              ; set contour spacing
+
+end
+
 undef ( "Config_inertial_stability_shade" )
 procedure Config_inertial_stability_shade (  \
   RES[*]           : logical \
