@@ -273,6 +273,27 @@ RES@cnFillPalette        = "precip2_17lev"
 
 end
 
+undef ( "Config_h_diabatic_contour" )
+procedure Config_h_diabatic_contour (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnLineColor                   = "black"                ; Set the line color
+RES@cnInfoLabelOn                 = False
+RES@cnLineThicknessF              =  12
+RES@gsnContourNegLineDashPattern  = 1                      ; sets negative contours to dash pattern 1
+RES@cnLineLabelInterval           = 1                      ; default = 2
+RES@cnLineLabelFontHeightF        = 0.025
+
+RES@cnLevelSelectionMode          = "ManualLevels"         ; set manual contour levels
+RES@cnMinLevelValF                =       0                ; set min contour level
+RES@cnMaxLevelValF                =      10                ; set max contour level
+RES@cnLevelSpacingF               =       1                ; set contour spacing
+
+end
+
 undef ( "Config_h_diabatic_shade" )
 procedure Config_h_diabatic_shade (  \
   RES[*]           : logical \
@@ -397,4 +418,51 @@ RES@cnMaxLevelValF       =      55              ; set max contour level
 RES@cnLevelSpacingF      =       5              ; set contour spacing
 
 end
+
+undef ( "Config_cape_contour" )
+procedure Config_cape_contour (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnLineColor                   = "black"                ; Set the line color
+RES@cnInfoLabelOn                 = False
+RES@cnLineThicknessF              =  12
+RES@gsnContourNegLineDashPattern  = 1                      ; sets negative contours to dash pattern 1
+RES@cnLineLabelInterval           = 1                      ; default = 2
+RES@cnLineLabelFontHeightF        = 0.025
+
+RES@cnLevelSelectionMode          = "ManualLevels"         ; set manual contour levels
+RES@cnMinLevelValF                =     500                ; set min contour level
+RES@cnMaxLevelValF                =    4000                ; set max contour level
+RES@cnLevelSpacingF               =     500                ; set contour spacing
+
+end
+
+undef ( "Config_cape_shade" )
+procedure Config_cape_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "WhiteYellowOrangeRed"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =      500              ; set min contour level
+RES@cnMaxLevelValF       =     4000             ; set max contour level
+RES@cnLevelSpacingF      =      500              ; set contour spacing
+
+end
+
 
