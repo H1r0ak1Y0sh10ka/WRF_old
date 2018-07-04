@@ -465,4 +465,28 @@ RES@cnLevelSpacingF      =      500              ; set contour spacing
 
 end
 
+undef ( "Config_qvaporflux_shade" )
+procedure Config_qvaporflux_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "GMT_drywet"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =     0.001           ; set min contour level
+RES@cnMaxLevelValF       =     0.009           ; set max contour level
+RES@cnLevelSpacingF      =     0.001           ; set contour spacing
+
+end
 
