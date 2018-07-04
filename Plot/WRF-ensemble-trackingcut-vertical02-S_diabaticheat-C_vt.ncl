@@ -1,5 +1,13 @@
-
-; Example of using panels with WRF data
+; This file is Draw Configuration.
+; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
+; History:
+; 23/06/2018 - 1st released
+;
+; This script calcurate tangential wind and latent heat for horizontal structure.
+; WRF experimental result and track data required.
+; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
+;
+;=====================================================================================
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
@@ -16,17 +24,17 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-  WRF_DIRC   = "/Volumes/Yoshi-HDD01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
-  TRACK_DIRC = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/"
+  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/Yoshi-HDD01/research/ncl/draw/S_h_diabatic-C_rh/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_h_diabatic-C_vt/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_h_diabatic-C_vt-v1-"
 
-  INIT = (/"20160106"/)     ; initial time/date
+  INIT = (/"20160103"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = "OFF" ; ON is draw, OFF is not.
+  SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
 
   N_SKIPTIME    = 24       ; number of skip time  
 
@@ -57,7 +65,7 @@ begin
   wrflist = systemfunc("basename " + cccc +"wrfout*")
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
-    do mmm = 10, n_MEMBER-1,1
+    do mmm = 0, n_MEMBER-1,1
 
     trackdata = TRACK_DIRC+"/PALI_"+INIT(nnn)+"_"+MEMBER(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata)
