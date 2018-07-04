@@ -3,7 +3,7 @@
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
-load "/Volumes/HDD01/research/ncl/wrf/radialAvg.ncl"
+load "/Volumes/Yoshi-HDD01/research/ncl/wrf/radialAvg.ncl"
 begin
 ;
 ; The WRF ARW input file.  
@@ -13,12 +13,12 @@ begin
 
    TY_NAME = "PALI"
 
-   WORK = "/Volumes/RAID01"
-  ; WORK = "/Volumes/Yoshi-HDD01"
+   ;WORK = "/Volumes/RAID01"
+   WORK = "/Volumes/Yoshi-HDD01"
    dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
  
-   init = (/"20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
-;   init = (/"20160106"/)
+   ;init = (/"20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
+   init = (/"20160103"/)
    n_init = dimsizes(init)
    
    member = (/ "p09","c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p10" /)
@@ -57,7 +57,7 @@ begin
   listnum = stringtointeger(systemfunc("ls -l " + cccc +"wrfout* | wc -l"))
 
   do mmm = 0, n_member-1,1
-     trackdata = "/Volumes/HDD01/research/ncl/wrf/track/PALI_"+init(nnn)+"_"+member(mmm)+"-track_v25.csv"
+     trackdata = "/Volumes/Yoshi-HDD01/research/ncl/wrf/track/PALI_"+init(nnn)+"_"+member(mmm)+"-track_v25.csv"
     print("Track data is "+trackdata+".")
 ;---Read in file as array of strings so we can parse each line
   lines  = asciiread(trackdata,-1,"string")
@@ -181,7 +181,8 @@ begin
      vr_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
      pp_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
      tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )         ; density => kg/m3
+     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*where(tk_levs(c_ttt,:,:,:).ne.0, tk_levs(c_ttt,:,:,:) , tk_levs@_FillValue))         ; density => kg/m3
+;     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:))         ; density => kg/m3
 
     do nr = 0,n_radius,1
     do na = 0,n_angle_division-1
@@ -326,7 +327,7 @@ begin
    vg_d  = dim_avg_n(vg_cyclind(mmm,c_ttt,:,:,:),2)
    vt_mean  = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2) 
 
-   plots         = gsn_csm_contour(wks01, 100*((vt_mean-vg_d)/vt_mean)  ,shade01_opts)
+   plots         = gsn_csm_contour(wks01, 100*((vt_mean-vg_d)/where(vg_d.ne.0, vg_d, vg_d@_FillValue))  ,shade01_opts)
    plots_contour = gsn_csm_contour(wks01, vt_mean,contour01_opts)
 
   vector01_opts = True 
