@@ -24,7 +24,7 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_diabaticheat-C_cape/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_diabaticheat-C_cape/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_diabaticheat-C_cape-v1-"
 
