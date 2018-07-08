@@ -27,16 +27,16 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "/Volumes/HDD01/research/ncl/draw/S_h_diabatic-C_vt/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_h_diabatic-C_vt/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_h_diabatic-C_vt-v1-"
 
-  INIT = (/"20160103"/)     ; initial time/date
+  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ; (/"20160103"/)     ; initial time/date
    
-  MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = "ON" ; ON is draw, OFF is not.
+  MEMBER        = (/"p09", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "c00", "p10" /)
+  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = 24       ; number of skip time  
+  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))     ; number of skip time  
 
   RADIUS_KM     = 200      ; kilometer
   N_RADIUS      = 25       ; number of grids
@@ -192,7 +192,7 @@ begin
         res_basis@gsnDraw             = False
         res_basis@gsnFrame            = False
         res_basis@gsnMaximize         = True
-        res_basis@vpWidthF            = 0.80
+        res_basis@vpWidthF            = 0.60
         res_basis@vpHeightF           = 0.60
 
         Y_LABEL =  zlevs*0.001 
@@ -235,6 +235,65 @@ begin
       end do ; iii loop
 
     delete(timesd)
+    delete(shade01_data)
+    delete(contour01_data)
+
+ave_time_sta = 96
+ave_time_end = 144
+
+;************************************************
+; create plot
+;************************************************
+; Set some basic resources
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(ave_time_sta)+"-"+times(ave_time_end))
+
+        res_title = True
+        res_title@gsnLeftString            = "FT"+ave_time_sta+"-FT"+ave_time_end
+        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
+
+        res_basis = True
+        res_basis@gsnDraw             = False
+        res_basis@gsnFrame            = False
+        res_basis@gsnMaximize         = True
+        res_basis@vpWidthF            = 0.60
+        res_basis@vpHeightF           = 0.60
+
+        Y_LABEL =  zlevs*0.001 
+
+        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tmXBMode            = "Explicit"
+        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
+        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+        res_basis@tmXBLabelFontHeightF= 0.02
+
+        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tmYLMode            = "Explicit"
+        res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+        res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+        res_basis@tmYLLabelFontHeightF= 0.02
+
+        res = True
+        res = res_basis
+        res = res_title
+
+        shade01_opts = True
+        shade01_opts = res
+        Config_h_diabatic_shade(shade01_opts)
+        
+        contour01_opts = True
+        contour01_opts = res
+        Config_vt_contour(contour01_opts)
+
+        shade01_data   = dim_avg_n(h_diabatic_cyclind(mmm,:,:,:,:),3)
+        contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
+        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(ave_time_sta:ave_time_end,:,:),0)   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(ave_time_sta:ave_time_end,:,:),0) ,contour01_opts)
+        overlay(plots,plots_contour)
+        draw(plots)
+        frame(wks01)
+        delete(shade01_data)
+        delete(contour01_data)
+
 
     end do ; mmm loop
 
