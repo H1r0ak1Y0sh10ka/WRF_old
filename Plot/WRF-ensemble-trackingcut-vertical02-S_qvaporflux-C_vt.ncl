@@ -3,7 +3,7 @@
 ; History:
 ; 23/06/2018 - 1st released
 ;
-; This script calcurate tangential wind and latent heat for horizontal structure.
+; This script calcurate tangential wind and water vapor flux for vertical structure.
 ; WRF experimental result and track data required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
@@ -46,6 +46,9 @@ begin
   N_ZLEVS       = 101      ; number of vertical
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
+
+  AVE_TIME_STA = (/48,96/)
+  AVE_TIME_END = (/96,144/)
 
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
@@ -236,25 +239,26 @@ begin
       end do ; iii loop
 
     delete(timesd)
+    delete(shade01_data)
+    delete(contour01_data)
 
-ave_time_sta = 48
-ave_time_end = 96
-
+if(dimsizes(AVE_TIME_END).ne.0)then
+      do iia = 0, dimsizes(AVE_TIME_END)-1,1
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
-        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(ave_time_sta)+"-"+times(ave_time_end))
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
 
         res_title = True
-        res_title@gsnLeftString       = "FT"+ave_time_sta+"-FT"+ave_time_end
+        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
         res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
         res_basis = True
         res_basis@gsnDraw             = False
         res_basis@gsnFrame            = False
         res_basis@gsnMaximize         = True
-        res_basis@vpWidthF            = 0.80
+        res_basis@vpWidthF            = 0.60
         res_basis@vpHeightF           = 0.60
 
         Y_LABEL =  zlevs*0.001 
@@ -283,13 +287,17 @@ ave_time_end = 96
         contour01_opts = res
         Config_vt_contour(contour01_opts)
 
-         shade01_data   = dim_avg_n(qvaporflux_cyclind(mmm,:,:,:,:),3)
+        shade01_data   = dim_avg_n(qvaporflux_cyclind(mmm,:,:,:,:),3)
         contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
-        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(ave_time_sta:ave_time_end,:,:),0)   ,shade01_opts)
-        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(ave_time_sta:ave_time_end,:,:),0) ,contour01_opts)
+        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
         overlay(plots,plots_contour)
         draw(plots)
         frame(wks01)
+        delete(shade01_data)
+        delete(contour01_data)
+      end do ; iia loop
+end if
 
     end do ; mmm loop
 exit

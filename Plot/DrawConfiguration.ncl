@@ -107,6 +107,31 @@ RES@cnLevelSpacingF               =      10                ; set contour spacing
 
 end
 
+undef ( "Config_rh_shade" )
+procedure Config_rh_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "GMT_drywet"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =     50           ; set min contour level
+RES@cnMaxLevelValF       =     90           ; set max contour level
+RES@cnLevelSpacingF      =      5           ; set contour spacing
+
+end
+
 undef ( "Config_vrSprd_shade" )
 procedure Config_vrSprd_shade (  \
   RES[*]           : logical \
@@ -489,4 +514,30 @@ RES@cnMaxLevelValF       =     0.009           ; set max contour level
 RES@cnLevelSpacingF      =     0.001           ; set contour spacing
 
 end
+
+undef ( "Config_tgrad_shade" )
+procedure Config_tgrad_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "hotcold_18lev"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =     -3           ; set min contour level
+RES@cnMaxLevelValF       =      3           ; set max contour level
+RES@cnLevelSpacingF      =      0.5          ; set contour spacing
+
+end
+
 
