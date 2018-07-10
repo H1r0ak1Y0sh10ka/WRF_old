@@ -1,10 +1,10 @@
-; This file is Draw Configuration.
+; This file is Analysis and Draw program.
 ; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 27/06/2018 - 1st released
+; 15/05/2018 - 1st released
 ;
-; This script calcurate diabatic heat and CAPE for hovmueller diagram.
-; WRF experimental result and track data required.
+; This script calcurate relative vorticity for hovmueller diagram with tangential wind.
+; WRF experimental result and track data are required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
 ;=====================================================================================
@@ -24,23 +24,21 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_diabaticheat-C_cape/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_rv-C_rmw/"+TY_NAME+"/"
 
-  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_diabaticheat-C_cape-v1-"
+  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_rv-C_rmw-v1-"
 
-  INIT = stringtointeger(systemfunc("read ifland; echo $ifland"));(/"20160103"/)     ; initial time/date
+  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/"20160103"/)     ; initial time/date
    
   MEMBER        = (/"c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
-  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ; ON is draw, OFF is not.
+  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland"))       ; ON is draw, OFF is not.
 
-  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))      ; number of skip time  
+  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))       ; number of skip time  
 
   N_RADIUS      = 25       ; number of grids
   N_ANGLE       = 36       ; number of angle
-  ;DIS          = 10000    ; model resolution (meter)
-  CAPE_LEVS     = 1000      ; height (meter)
-  HEAT_TOP      = 8000
-  HEAT_BOT      = 2000
+  DIS           = 10000    ; model resolution (meter)
+  ZLEVS         = 500     ; height (meter)
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
@@ -48,9 +46,9 @@ begin
  
   n_INIT   = dimsizes(INIT)
   n_MEMBER = dimsizes(MEMBER)
-  n_zlevs  = ((HEAT_TOP-HEAT_BOT)/1000)+1
-  zlevs    = fspan(HEAT_BOT,HEAT_TOP,n_zlevs)
-  zlevs!0 = "lev"
+  n_ZLEVS  = dimsizes(ZLEVS)
+  zlevs    = ZLEVS
+  zlevs!0  = "lev"
   makedir(OUT_DIRC)
   SWITCH_MEAN   = str_upper(SWITCH_MEAN)
 
@@ -120,17 +118,14 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     uu         = new ( (/nz,nlat,nlon/),"float")
     vv         = new ( (/nz,nlat,nlon/),"float")
-    cape       = new ( (/nz,nlat,nlon/),"float")
-    h_diabatic = new ( (/nz,nlat,nlon/),"float")
+    rv         = new ( (/nz,nlat,nlon/),"float")
 
-    h_diabatic_levs    = new ( (/n_zlevs,nlat,nlon/),"float")
-    cape_levs          = new ( (/nlat,nlon/),"float")
-
-    if(isdefined("h_diabatic_cyclind").eq.False)then
-    h_diabatic_cyclind = new ( (/n_MEMBER,n_timestep,n_zlevs,N_RADIUS+1,N_ANGLE/),"float") 
-    cape_cyclind       = new ( (/n_MEMBER,n_timestep,N_RADIUS+1,N_ANGLE/),"float") 
+    vt_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
+    rv_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
+    if(isdefined("vt_cyclind").eq.False)then
+    rv_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vt_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
-
     vt_max_r   = new (n_timestep,"integer") 
 
     c_ttt=0
@@ -145,52 +140,36 @@ begin
         do it = 0,n_times-1, N_SKIPTIME
         times(c_ttt) = timesd(it)                             ; get all times in the file
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-        dammy = f[iii]->H_DIABATIC
-        h_diabatic(:,:,:) = dammy(it,:,:,:)*3600
-        h_diabatic@units="K hour-1"
+        uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
+        vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
+        rv(:,:,:)    = uv2vr_cfd (uu,vv,lat,lon, 3)/10^-4
+        copy_VarMeta( uu, rv )
+        rv@long_name = "Relative Vorticity"
+        rv@units     = "10^-4 s-1"
+
+        vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
+
+        if(n_ZLEVS.eq.1)then
+        rv_levs(0,:,:)  = wrf_user_intrp3d(rv,zz(:,:,:),"h", ZLEVS,0.,False)
+        vt_levs(0,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
+        delete(vComps)
+        dammy = rectangular2polar_test(rv_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rv_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-        h_diabatic_levs(:,:,:)  = wrf_user_intrp3d(h_diabatic(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        dammy = rectangular2polar_test(h_diabatic_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        h_diabatic_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar_test(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-
-        ;uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
-        ;vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
-        ;vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
-
-        ;if(n_ZLEVS.eq.1)then
-        ;vr_levs(0,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", ZLEVS,0.,False)
-        ;vt_levs(0,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
-        ;delete(vComps)
-        ;dammy = rectangular2polar_test(vr_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        ;vr_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
-        ;delete(dammy)
-        ;dammy = rectangular2polar_test(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        ;vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
-        ;delete(dammy)
-        ;else
-        ;vr_levs(:,:,:)  = wrf_user_intrp3d(vComps[0],zz(:,:,:),"h", ZLEVS,0.,False)
-        ;vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
-        ;delete(vComps)
-        ;dammy = rectangular2polar(vr_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        ;vr_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
-        ;delete(dammy)
-        ;dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        ;vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
-        ;delete(dammy)
-        ;end if
-
-        ;cape3d     = wrf_user_getvar(f[iii],"cape_3d",it)        ; cape averaged to mass points
-        cape2d     = wrf_user_getvar(f[iii],"cape_2d",it)        ; cape averaged to mass points
-        ;cape(:,:,:)= cape3d(0,:,:,:)
-        ;cape_levs(:,:)  = wrf_user_intrp3d(cape(:,:,:),zz(:,:,:),"h", CAPE_LEVS,0.,False)
-        ;delete(cape3d)
-        cape_levs(:,:) = cape2d(0,:,:)
-        delete(cape2d)
-
-        dammy = rectangular2polar_test(cape_levs(:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        cape_cyclind(mmm,c_ttt,:,:) = rm_single_dims(dammy[0])
+        else
+        rv_levs(:,:,:)  = wrf_user_intrp3d(rv,zz(:,:,:),"h", ZLEVS,0.,False)
+        vt_levs(:,:,:)  = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS,0.,False)
+        delete(vComps)
+        dammy = rectangular2polar(rv_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rv_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
+        dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
+        end if
 
         c_ttt = c_ttt + N_SKIPTIME
 
@@ -203,10 +182,10 @@ begin
 ;************************************************
 ; Set some basic resources
 
-      wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm))
+      wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + (ZLEVS)+"m")
 
       res_title = True
-      res_title@gsnLeftString       = "Case; "+ TY_NAME + "~C~Init; " + times(0)
+      res_title@gsnLeftString       = "Case; "+ TY_NAME + " Height; " + ZLEVS*0.001 + "km ~C~Init; " + times(0)
       res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
       res_basis = True
@@ -239,30 +218,29 @@ begin
 
       shade01_opts = True
       shade01_opts = res
-      ;Config_cape_shade(shade01_opts)
-      Config_h_diabatic_shade(shade01_opts)
+      Config_rv_shade(shade01_opts)
 
       contour01_opts = True
       contour01_opts = res
-      Config_cape_contour(contour01_opts)
+      Config_vt_kyodo_contour(contour01_opts)
 
-      contour01_data   = dim_avg_n(cape_cyclind(mmm,:,:,:),2)
-      contour01_data   = linmsg_n(contour01_data,0,0)
-      shade01_data = dim_avg_n(dim_avg_n(h_diabatic_cyclind(mmm,:,:,:,:),1),2)
-      shade01_data = linmsg_n(shade01_data,0,0)
+      shade01_data   = dim_avg_n(rv_cyclind(mmm,:,0,:,:),2)
+      shade01_data   = linmsg_n(shade01_data,0,0)
+      contour01_data = dim_avg_n(vt_cyclind(mmm,:,0,:,:),2)
+      contour01_data = linmsg_n(contour01_data,0,0)
 
       plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
       plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
       overlay(plots,plots_contour)
 
-;       do it =0,c_ttt-N_SKIPTIME
-;       vt_max_r(it) = maxind (contour01_data(it,:))
-;       end do
+       do it =0,c_ttt-N_SKIPTIME
+       vt_max_r(it) = maxind (contour01_data(it,:))    
+       end do
 
-;      plres = True
-;      plres@gsLineColor               = "grey"   ; Set the line color.
-;      plres@gsLineThicknessF          = 14.0
-;      contour_rmw = gsn_add_polyline  (wks01, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
+      plres = True
+      plres@gsLineColor               = "grey"   ; Set the line color.
+      plres@gsLineThicknessF          = 14.0
+      contour_rmw = gsn_add_polyline  (wks01, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)
 
       draw(plots)
       frame(wks01)
@@ -292,22 +270,23 @@ begin
 
     shade01_opts = True
     shade01_opts = res
-    Config_vt_shade(shade01_opts)
+    Config_rv_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
     Config_vt_kyodo_contour(contour01_opts)
 
+    rv_azimuth_mean = dim_avg(rv_cyclind(:,:,0,:,:))
+    shade01_data    = dim_avg_n(linmsg_n(rv_azimuth_mean,0,1),0)
     vt_azimuth_mean = dim_avg(vt_cyclind(:,:,0,:,:))
-    shade01_data    = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0)
-    contour01_data  = shade01_data 
+    coutour01_data  = dim_avg_n(linmsg_n(vt_azimuth_mean,0,1),0) 
     plots           = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
     plots_contour   = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
     overlay(plots,plots_contour)
 
     vt_max_r   = new (n_timestep,"integer") 
        do it =0,c_ttt-N_SKIPTIME
-       vt_max_r(it) = maxind (shade01_data(it,:))    
+       vt_max_r(it) = maxind (contour01_data(it,:))    
        end do
 
     plres = True
@@ -324,8 +303,8 @@ begin
 
     shade02_opts = True
     shade02_opts = res
-    Config_vtSprd_shade(shade02_opts)
-    shade02_data   = dim_stddev_n(linmsg_n(vt_azimuth_mean,0,1),0)
+    Config_rvSprd_shade(shade02_opts)
+    shade02_data   = dim_stddev_n(linmsg_n(rv_azimuth_mean,0,1),0)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
 
     contour_rmw = gsn_add_polyline  (wks02, plots, vt_max_r , ispan(0,c_ttt-N_SKIPTIME,1), plres)

@@ -36,11 +36,8 @@ begin
 
   N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))      ; number of skip time  
 
-  N_RADIUS      = 25       ; number of grids
-  N_ANGLE       = 36       ; number of angle
-  DIS           = 10000    ; model resolution (meter)
-  ZTOP          = 20000    ; meter
-  N_ZLEVS       = 101      ; number of vertical
+  N_GRIDS       = 51       ; number of grids
+  ZLEVS         = 1000     ; meter
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
@@ -48,10 +45,10 @@ begin
  
   n_INIT   = dimsizes(INIT)
   n_MEMBER = dimsizes(MEMBER)
-  zlevs    =  fspan(0,ZTOP,N_ZLEVS)
-  zlevs!0  = "lev"
+  ZLEVS!0  = "lev"
   makedir(OUT_DIRC)
   SWITCH_MEAN   = str_upper(SWITCH_MEAN)
+  n_rgrids = floattointeger((N_GRIDS-1)*0.5)
 
 ;*************************************************************************************
 
@@ -124,8 +121,13 @@ begin
     vv         = new ( (/nz,nlat,nlon/),"float")
     aclhf      = new ( (/nlat,nlon/),"float")
 
-    vt_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
-          
+    vt_lev     = new ( (/nlat,nlon/),"float")
+
+    if(mmm.eq.0)then
+    vt_grid    = new ( (/n_MEMBER,n_timestep,N_GRIDS,N_GRIDS/),"float")
+    aclhf_grid = new ( (/n_MEMBER,n_timestep,N_GRIDS,N_GRIDS/),"float")
+    end if
+
     c_ttt=0
 
       do iii =0,listnum-1,1
@@ -142,14 +144,23 @@ begin
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
         dammy = f[iii]->ACLHF
         aclhf(:,:)   = dammy(it,:,:)
-        exit
+        delete(dammy)
 
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
-        vt_levs(:,:,:) = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
+        vt_lev(:,:) = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", ZLEVS, 0., False)
         delete(vComps)
 
+        if(c_ilat(c_ttt)-n_rgrids.gt.0.and.c_ilat(c_ttt)+n_rgrids.lt.nlat.and. \
+           c_ilon(c_ttt)-n_rgrids.gt.0.and.c_ilon(c_ttt)+n_rgrids.lt.nlon)then
+        vt_grid(mmm,c_ttt,:,:) = vt_lev(c_ilat(c_ttt)-n_rgrids:c_ilat(c_ttt)+n_rgrids,c_ilon(c_ttt)-n_rgrids:c_ilon(c_ttt)+n_rgrids)
+        aclhf_grid(mmm,c_ttt,:,:) = aclhf(c_ilat(c_ttt)-n_rgrids:c_ilat(c_ttt)+n_rgrids,c_ilon(c_ttt)-n_rgrids:c_ilon(c_ttt)+n_rgrids)
+
+        else
+        vt_grid(mmm,c_ttt,:,:)    = vt@_FillValue
+        aclhf_grid(mmm,c_ttt,:,:) = aclhf@_FillValue
+        end if 
         print("Now drawing time is "+times(c_ttt))
-exit
+
 ;************************************************
 ; create plot of EACH MEMBER
 ;************************************************
@@ -176,22 +187,23 @@ exit
         res_basis@gsnFrame            = False
         res_basis@gsnMaximize         = True
         res_basis@vpWidthF            = 0.80
-        res_basis@vpHeightF           = 0.60
+        res_basis@vpHeightF           = 0.80
 
-        Y_LABEL =  zlevs*0.001 
+        X_LABEL = (fspan( (-1*(dx*0.001)*n_rgrids),((dx*0.001)*n_rgrids),((N_GRIDS-1)/10)+1) )
+        Y_LABEL = (fspan( (-1*(dy*0.001)*n_rgrids),((dy*0.001)*n_rgrids),((N_GRIDS-1)/10)+1) )
 
-        res_basis@tiXAxisString       = "Radius from the centre (km)" 
+        res_basis@tiXAxisString       = "DX(km)" 
         res_basis@tiXAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmXBMode            = "Explicit"
-        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
-        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+        res_basis@tmXBValues          = ispan(0,N_GRIDS-1,5)
+        res_basis@tmXBLabels          = X_LABEL
         res_basis@tmXBLabelFontHeightF= 0.03
 
-        res_basis@tiYAxisString       = "Height(km)"
+        res_basis@tiYAxisString       = "DY(km)"
         res_basis@tiYAxisFontHeightF  = 0.025                             ; default 
         res_basis@tmYLMode            = "Explicit"
-        res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
-        res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+        res_basis@tmYLValues          = ispan(0,N_GRIDS-1,5)
+        res_basis@tmYLLabels          = Y_LABEL
         res_basis@tmYLLabelFontHeightF= 0.03
 
         res = True
@@ -200,14 +212,14 @@ exit
 
         shade01_opts = True
         shade01_opts = res
-        Config_inertial_stability_shade(shade01_opts)
+        ;Config_inertial_stability_shade(shade01_opts)
 
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
         
-        shade01_data   = instab_cyclind(mmm,c_ttt,:,:)
-        contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = aclhf_grid(mmm,c_ttt,:,:)
+        contour01_data = vt_grid(mmm,c_ttt,:,:)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
         overlay(plots,plots_contour)
@@ -222,7 +234,7 @@ exit
     delete(timesd)
 
     end do ; mmm loop
-
+exit
   if(SWITCH_MEAN .eq."ON") then
   print("Now start to drawing ENSEMBLE MEAN.")  
 

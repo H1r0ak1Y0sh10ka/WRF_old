@@ -17,24 +17,24 @@ begin
   ; WORK = "/Volumes/Yoshi-HDD01"
    dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
 
-;   init = (/"20160106"/)
-    init = (/"20160103","20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
+   init = (/"20160103"/)
+ ;   init = (/"20160103","20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
 ;   init = (/"20160106-p10deg","20160106-p02deg","20160106-p03deg","20160106-p04deg","20160106-p05deg","20160106-p06deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
    n_init = dimsizes(init)
    
-   member = (/ "c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p10" /)
+   member = (/ "p09", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "c00", "p10" /)
    ; member = (/ "p09" /)
    n_member = dimsizes(member)
    
-   n_skiptime = 12
+   n_skiptime = 6
 
    n_radius       = 25  ; number of grids
    n_angle_division = 36  ; number
   ;angle_deltadeg = 45.0 ; degree 
    dis = 10000   ; meter
 
-  z_top = 20000
-  n_zlevs = 101
+  z_top = 15000
+  n_zlevs = 76
   zlevs = fspan(0,z_top,n_zlevs)
   zlevs!0 = "lev"
 
@@ -328,8 +328,8 @@ frame(wks01)
   delete(timesd)
 
 
-ave_time_sta = 0
-ave_time_end = 12
+ave_time_sta = 48
+ave_time_end = 96
 
 ;************************************************
 ; create plot

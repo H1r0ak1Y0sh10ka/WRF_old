@@ -27,16 +27,16 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_h_diabatic-C_vt/"+TY_NAME+"/"
+  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_rh-C_vt/"+TY_NAME+"/"
 
-  OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_h_diabatic-C_vt-v1-"
+  OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_rh-C_vt-v1-"
 
-  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ; (/"20160103"/)     ; initial time/date
+  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/"20160103"/) ; initial time/date
    
   MEMBER        = (/"p09", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "c00", "p10" /)
-  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ; ON is draw, OFF is not.
+  SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ;   ON is draw, OFF is not.
 
-  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))     ; number of skip time  
+  N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))       ; number of skip time  
 
   RADIUS_KM     = 200      ; kilometer
   N_RADIUS      = 25       ; number of grids
@@ -47,6 +47,8 @@ begin
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
+  AVE_TIME_STA = (/48,96/)
+  AVE_TIME_END = (/96,144/)
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
   n_INIT   = dimsizes(INIT)
@@ -125,12 +127,12 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     uu         = new ( (/nz,nlat,nlon/),"float")
     vv         = new ( (/nz,nlat,nlon/),"float")
-    h_diabatic = new ( (/nz,nlat,nlon/),"float")
+    rh         = new ( (/nz,nlat,nlon/),"float")
 
-    h_diabatic_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
-    vt_levs            = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    rh_levs = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    vt_levs         = new ( (/N_ZLEVS,nlat,nlon/),"float")
     if(isdefined("h_diabatic_cyclind").eq.False)then
-    h_diabatic_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rh_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind         = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
 
@@ -146,26 +148,23 @@ begin
         do it = 0,n_times-1, N_SKIPTIME
         times(c_ttt) = timesd(it)                             ; get all times in the file
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-        dammy = f[iii]->H_DIABATIC
-        h_diabatic(:,:,:) = dammy(it,:,:,:)*3600
-        h_diabatic@units="K hour-1"
-        delete(dammy)
+        rh(:,:,:) = wrf_user_getvar(f[iii],"rh",it)      ; rh on mass points
         
         uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
-        
-        h_diabatic_levs(:,:,:) = wrf_user_intrp3d(h_diabatic(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+
+        rh_levs(:,:,:) = wrf_user_intrp3d(rh(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
         vt_levs(:,:,:)         = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
         delete(vComps)
 
-        dammy = rectangular2polar(h_diabatic_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        h_diabatic_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar(rh_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rh_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
         dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-
+        
         print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot of EACH MEMBER
@@ -215,13 +214,13 @@ begin
 
         shade01_opts = True
         shade01_opts = res
-        Config_h_diabatic_shade(shade01_opts)
-
+        Config_rh_shade(shade01_opts)
+        
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
         
-        shade01_data   = dim_avg_n(h_diabatic_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = dim_avg_n(rh_cyclind(mmm,c_ttt,:,:,:),2)
         contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
@@ -238,17 +237,16 @@ begin
     delete(shade01_data)
     delete(contour01_data)
 
-ave_time_sta = 96
-ave_time_end = 144
-
+if(dimsizes(AVE_TIME_END).ne.0)then
+      do iia = 0, dimsizes(AVE_TIME_END)-1,1
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
-        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(ave_time_sta)+"-"+times(ave_time_end))
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
 
         res_title = True
-        res_title@gsnLeftString            = "FT"+ave_time_sta+"-FT"+ave_time_end
+        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
         res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
         res_basis = True
@@ -278,25 +276,26 @@ ave_time_end = 144
 
         shade01_opts = True
         shade01_opts = res
-        Config_h_diabatic_shade(shade01_opts)
+        Config_rh_shade(shade01_opts)
         
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
 
-        shade01_data   = dim_avg_n(h_diabatic_cyclind(mmm,:,:,:,:),3)
+        shade01_data   = dim_avg_n(rh_cyclind(mmm,:,:,:,:),3)
         contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
-        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(ave_time_sta:ave_time_end,:,:),0)   ,shade01_opts)
-        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(ave_time_sta:ave_time_end,:,:),0) ,contour01_opts)
+        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
         overlay(plots,plots_contour)
         draw(plots)
         frame(wks01)
         delete(shade01_data)
         delete(contour01_data)
-
+      end do ; iia loop
+end if
 
     end do ; mmm loop
-
+exit
   if(SWITCH_MEAN .eq."ON") then
   print("Now start to drawing ENSEMBLE MEAN.")  
 
@@ -331,7 +330,7 @@ ave_time_end = 144
 
     shade01_opts = True
     shade01_opts = res
-    Config_dbz_shade(shade01_opts)
+    Config_rh_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
@@ -369,6 +368,7 @@ ave_time_end = 144
 exit
 
 end
+
 
 
 
