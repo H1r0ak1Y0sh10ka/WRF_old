@@ -1,7 +1,7 @@
 ; This file is Draw Configuration.
 ; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 23/06/2018 - 1st released
+; 10/07/2018 - 1st released
 ;
 ; This script calcurate gradient wind for vertical structure.
 ; WRF experimental result and track data required.
@@ -47,8 +47,8 @@ begin
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
-  AVE_TIME_STA = (/48,96/)
-  AVE_TIME_END = (/96,144/)
+  AVE_TIME_STA = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/48,96/)
+  AVE_TIME_END = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/96,144/)
 
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
@@ -130,6 +130,7 @@ begin
     vv         = new ( (/nz,nlat,nlon/),"float")
     tk         = new ( (/nz,nlat,nlon/),"float")
     pp         = new ( (/nz,nlat,nlon/),"float")
+    vt         = new ( (/nz,nlat,nlon/),"float")
 
     div_levs   = new ( (/N_ZLEVS,nlat,nlon/),"float")
     vt_levs    = new ( (/N_ZLEVS,nlat,nlon/),"float")
@@ -145,11 +146,11 @@ begin
     vr_cyclind   = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     vt_cyclind   = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
 
-    vt_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    pp_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    ff_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    vg_cyclind     =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float") 
-    rho_cyclind    =new( (/n_member,n_timestep,n_zlevs,n_radius+1,n_angle_division/),"float")
+    vt_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    pp_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    ff_cyclind     =new( (/n_MEMBER,n_timestep,1,N_RADIUS+1,N_ANGLE/),"float") 
+    vg_cyclind     =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    rho_cyclind    =new( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
     end if
 
     c_ttt=0
@@ -162,25 +163,59 @@ begin
       n_times = count_unique_values(timesd) ; number of times in the file 
 
         do it = 0,n_times-1, N_SKIPTIME
-        times(c_ttt) = timesd(it)                             ; get all times in the file
-        zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
-        tk(:,:,:)    = wrf_user_getvar(f[iii],"tk",it)      ; tgrad on mass points
-        uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
-        vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
-        vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
-
-        tk_levs(:,:,:) = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        vt_levs(:,:,:)         = wrf_user_intrp3d(vComps[1],zz(:,:,:),"h", zlevs,0.,False)
+        times(c_ttt) = timesd(it) ; get all times in the file
+        uu(:,:,:)  = wrf_user_getvar(f[iii],"ua",it)        ; u averaged to mass points
+        vv(:,:,:)  = wrf_user_getvar(f[iii],"va",it)        ; v averaged to mass points
+        zz(:,:,:)  = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
+        pp(:,:,:)  = wrf_user_getvar(f[iii],"pressure",it)  ; pressure is our vertical coordinate
+        tk(:,:,:)  = wrf_user_getvar(f[iii],"tk",it)        ; tk is our vertical coordinate
+        vComps = calcWindComponents(uu(:,:,:),vv(:,:,:),lat,lon,c_lat(c_ttt),c_lon(c_ttt))
+        vt(:,:,:) = vComps[1]
         delete(vComps)
+        vt_levs(:,:,:)       = wrf_user_intrp3d(vt(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        pp_levs(:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        tk_levs(:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
+        rho_levs(:,:,:)      = pp_levs(:,:,:)*100 /(rgas*tk_levs(:,:,:) )         ; density => kg/m3
 
-        dammy = rectangular2polar(tk_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
-        tk_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        dammy = rectangular2polar(rho_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        rho_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
+        dammy = rectangular2polar(pp_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        pp_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
+        delete(dammy)
+        dammy = rectangular2polar_test(ff(:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
+        test = dammy[0]
+        ff_cyclind(mmm,c_ttt,0,:,:) = test(0,:,:)
+        delete(dammy)
+        delete(test)
         dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
         delete(dammy)
-        
-        print("Now drawing time is "+times(c_ttt))
+
+        dpdr =  new( (/N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float")
+        dpdr = (center_finite_diff_n (pp_cyclind(mmm,c_ttt,:,:,:),DIS,False,0,1))*100
+
+        do nr=0,N_RADIUS,1
+         RR = DIS*nr
+        do na = 0, N_ANGLE-1
+          vg_cyclind(mmm,c_ttt,:,nr,na)  =  0.5*( \
+                                            -1*ff_cyclind(mmm,c_ttt,0,nr,na) *RR \
+                                            +sqrt( (ff_cyclind(mmm,c_ttt,0,nr,na)*RR)^2 +(4*RR/rho_cyclind(mmm,c_ttt,:,nr,na))*dpdr(:,nr,na) )\
+                                            ) 
+        end do 
+        end do 
+
+        do iz = 0, N_ZLEVS-1,1
+          do ir = 0, N_RADIUS,1
+             do ia = 0, N_ANGLE-1
+             if (isnan_ieee(vg_cyclind(mmm,c_ttt,iz,ir,ia))) then
+             vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
+             end if
+             end do
+           end do
+         end do    
+
+print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot of EACH MEMBER
 ;************************************************
@@ -229,23 +264,17 @@ begin
 
         shade01_opts = True
         shade01_opts = res
-        Config_tgrad_shade(shade01_opts)
+        Config_vt_shade(shade01_opts)
         
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
- 
-          do nr = 0, N_RADIUS,1
-            do na = 0,N_ANGLE-1
-          tkanomaly_cyclind(mmm,c_ttt,:,nr,na)  =  tk_cyclind(mmm,c_ttt,:,nr,na) - dim_avg_n(tk_cyclind(mmm,c_ttt,:,:,na),1)
-            end do ; na loop
-          end do ; nr loop
 
-        shade01_data   = dim_avg_n(tkanomaly_cyclind(mmm,c_ttt,:,:,:),2)
-        contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
+        shade01_data   = dim_avg_n(vg_cyclind(mmm,c_ttt,:,:,:),2)
+        ;contour01_data = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2)
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-        plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-        overlay(plots,plots_contour)
+        ;plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+        ;overlay(plots,plots_contour)
         draw(plots)
         frame(wks01)
 
@@ -256,9 +285,11 @@ begin
 
     delete(timesd)
     delete(shade01_data)
-    delete(contour01_data)
+    ;delete(contour01_data)
 
-if(dimsizes(AVE_TIME_END).ne.0)then
+if(.not.all(ismissing(AVE_TIME_END)))then
+if(.not.all(ismissing(AVE_TIME_STA)))then
+if(dimsizes(AVE_TIME_END).ne.0.)then
       do iia = 0, dimsizes(AVE_TIME_END)-1,1
 ;************************************************
 ; create plot
@@ -297,25 +328,27 @@ if(dimsizes(AVE_TIME_END).ne.0)then
 
         shade01_opts = True
         shade01_opts = res
-        Config_tgrad_shade(shade01_opts)
+        Config_vt_shade(shade01_opts)
         
         contour01_opts = True
         contour01_opts = res
         Config_vt_contour(contour01_opts)
 
-        shade01_data   = dim_avg_n(tkanomaly_cyclind(mmm,:,:,:,:),3)
+        shade01_data   = dim_avg_n(vg_cyclind(mmm,:,:,:,:),3)
         contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
         plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
-        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
-        overlay(plots,plots_contour)
+;        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
+;        overlay(plots,plots_contour)
         draw(plots)
         frame(wks01)
         delete(shade01_data)
         delete(contour01_data)
       end do ; iia loop
 end if
+end if
+end if
     end do ; mmm loop
-exit
+
   if(SWITCH_MEAN .eq."ON") then
   print("Now start to drawing ENSEMBLE MEAN.")  
 
@@ -350,17 +383,17 @@ exit
 
     shade01_opts = True
     shade01_opts = res
-    Config_tgrad_shade(shade01_opts)
+    Config_vt_shade(shade01_opts)
 
     contour01_opts = True
     contour01_opts = res
-    Config_rh_contour(contour01_opts)
+;    Config_rh_contour(contour01_opts)
        
-    shade01_data   = dim_avg_n(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3),0)
-    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
+    shade01_data   = dim_avg_n(dim_avg_n(vg_cyclind(:,it,:,:,:),3),0)
+;    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
     plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-    plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-    overlay(plots,plots_contour)
+;    plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+;    overlay(plots,plots_contour)
     draw(plots)
     frame(wks01)
   
@@ -370,9 +403,9 @@ exit
 
     shade02_opts = True
     shade02_opts = res
-    Config_dbzSprd_shade(shade02_opts)
+    Config_vtSprd_shade(shade02_opts)
 
-    dammy=(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3))
+    dammy=(dim_avg_n(vg_cyclind(:,it,:,:,:),3))
     shade02_data   = dim_stddev_n(dammy,0)
     delete(dammy)
     plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
