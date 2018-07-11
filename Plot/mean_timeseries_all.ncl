@@ -14,7 +14,7 @@ begin
   init_H    = 0
   init_plus = "" ; ex. -p01deg
 
-  para = (/ "cape"/)    ; spd, cape ,dcapedt,dspddt
+  para = (/ "spd"/)    ; spd, cape ,dcapedt,dspddt
   npara    = dimsizes(para)
 
 ; We generate plots, but what kind do we prefer?
@@ -23,10 +23,11 @@ begin
 ; type = "eps"
  type = "png"
 
-  plot_type  = 3 ;;;; 0 is max and min with mean and best track.
+  plot_type  = 4 ;;;; 0 is max and min with mean and best track.
                  ;;;; 1 is all members' contours without best track.
                  ;;;; 2 is the ensemble number's plots by emphasis of each member.
                  ;;;; 3 is the ensemble number's plots by emphasis of each member.
+                 ;;;; 4 is best member and worst member at any time with mean and best track.
 
   ibtracs_dir  = "/Volumes/HDD01/research/analysis/track/ibtracks/"
   ibtracs_data = "2016005N02187.ibtracs."
@@ -421,6 +422,82 @@ else if(plot_type.eq.3)then ;***************************************************
 
   plot_legend = simple_legend(wks01,plots_mean,gres,lineres,textres)
 
+else if(plot_type.eq.4)then ;******************************************************************************************************************************
+  print("plot_type is 4.")
+
+  b_opts = True
+  b_opts = res01
+  b_opts@xyLineColor           = "red"
+  b_opts@xyLineThicknessF      = 5.0
+  plots_best  = gsn_csm_xy(wks01,x,bspd,b_opts)
+
+;*****************************************************   
+; CALCULATE MIN & MAX
+;***************************************************** 
+  mnmx      = new ((/2,timestep/), float)
+  mnmx(0,:) = dim_min_n(data(nnn,:,:),0)
+  mnmx(1,:) = dim_max_n(data(nnn,:,:),0)
+
+;*****************************************************   
+; CALCULATE RSME & BEST MEMBER
+;***************************************************** 
+  rmse     = new((/mmm/),float)
+
+  do im = 0, mmm-1,1
+  rmse(im) = dim_rmsd(bspd(132),data(nnn,im,132))
+  end do
+
+  best_membern = minind(rmse)
+  wrst_membern = maxind(rmse)
+
+  me_opts@xyLineColor           = "Blue"
+  me_opts@xyLineThicknessF      = 5.0
+  plots_member = gsn_csm_xy(wks01,x,data(0,best_membern,:),me_opts)
+  overlay(plots_mean,plots_member)
+  delete(plots_member)
+
+  delete( me_opts@xyLineColor  )
+  delete( me_opts@xyLineThicknessF   )
+
+  me_opts@xyLineColor           = "green4"
+  me_opts@xyLineThicknessF      = 5.0
+  plots_member = gsn_csm_xy(wks01,x,data(0,wrst_membern,:),me_opts)
+  overlay(plots_mean,plots_member)
+  delete(plots_member)
+
+  delete( me_opts@xyLineColor  )
+  delete( me_opts@xyLineThicknessF   )
+
+  me_opts@gsnXYFillColors          = "lightgray"
+  me_opts@xyLineColor     = -1                           ; We don't want the line, so make it transparent.
+  me_opts@xyMonoLineColor    = False             ; want colored lines
+  plots_member = gsn_csm_xy(wks01,x,mnmx(0:1,:),me_opts)
+  overlay(plots_mean,plots_member)
+  overlay(plots_mean,plots_best)
+
+;----------------------------------------------------------------------
+; Code for customizing a legend via simple_legend.
+;----------------------------------------------------------------------
+
+;---Create three resource lists required for simple_legend
+  gres     = True     ; legend position
+  lineres  = True     ; legend lines
+  textres  = True     ; legend labels
+
+  gres@Position             = "Bottom"
+  gres@YPosPercent          = 75.5      ; from the bottom
+  gres@XPosPercent          =  2.5      ; move to the right side
+  lineres@lgLineThicknesses = 5.0      ; line thicknesses
+  lineres@lgDashIndexes = (/0,0,0,0,0/)                   ; line types
+  lineres@LineLengthPercent = 9.       ; expressed as %, 0->100, length of line
+
+;---Attach legend to first plot
+  textres@lgLabels     = (/"Best track","Ensemble mean("+decimalPlaces(dim_rmsd(bspd(start_fcstn:end_fcstn),mean(start_fcstn:end_fcstn)),2,True)+")","Ensemble members","Best member("+member(best_membern)+","+decimalPlaces(rmse(best_membern),2,True)+")","Worst member("+member(wrst_membern)+","+decimalPlaces(rmse(wrst_membern),2,True)+")"/)
+  lineres@lgLineColors =  (/"red", "black", "lightgray","Blue","green4"/)
+
+  plot_legend = simple_legend(wks01,plots_mean,gres,lineres,textres)
+
+end if    ;******************************************************************************************************************************
 end if    ;******************************************************************************************************************************
 end if   ;******************************************************************************************************************************
 end if   ;******************************************************************************************************************************
