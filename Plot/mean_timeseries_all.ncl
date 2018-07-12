@@ -123,7 +123,7 @@ begin
   bspd(0:timestep-1)=linmsg(bspd(0:timestep-1),0)
 
   do nnn = 0,ninit-1 ; number of initial times
-  do ii = 0,mmm-1 ;2,5,3;0,mmm-1 ; number of members 
+  do ii = 0,mmm-1    ; number of members 
   do ppp = 0,npara-1 ; parameter loop
 
      trackdata = track_dir+case_name+"_"+init(nnn)+"_"+member(ii)+"-"+para(ppp)+"_"+ track_ver+".csv"
@@ -168,9 +168,12 @@ delete(fields)
   nave = 7
   opt  = 0
   data = runave(center_finite_diff(data(nnn,:,:),1,False,0),nave,opt)
+  else if(para.eq."spd")then
+  gustfactor = 1.23
+  data = data/gustfactor
   end if
   end if
-
+  end if
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   p_opt = True
@@ -442,13 +445,15 @@ else if(plot_type.eq.4)then ;***************************************************
 ; CALCULATE RSME & BEST MEMBER
 ;***************************************************** 
   rmse     = new((/mmm/),float)
+  EVA_STA  =  54
+  EVA_END  = 132
 
   do im = 0, mmm-1,1
-  rmse(im) = dim_rmsd(bspd(132),data(nnn,im,132))
+  rmse(im) = dim_rmsd(bspd(EVA_STA:EVA_END),data(nnn,im,EVA_STA:EVA_END))
   end do
 
   best_membern = minind(rmse)
-  wrst_membern = maxind(rmse)
+  wrst_membern = 10;maxind(rmse)
 
   me_opts@xyLineColor           = "Blue"
   me_opts@xyLineThicknessF      = 5.0
