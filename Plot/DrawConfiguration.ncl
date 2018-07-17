@@ -565,4 +565,58 @@ RES@cnLevelSpacingF      =       0.2              ; set contour spacing
 
 end
 
+undef ( "Config_olr_shade" )
+procedure Config_olr_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+RES@cnFillMode           = "RasterFill"
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+RES@cnFillPalette        = "MPL_Greys"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =     100           ; set min contour level
+RES@cnMaxLevelValF       =     240           ; set max contour level
+RES@cnLevelSpacingF      =      20          ; set contour spacing
+
+end
+
+undef ( "Config_prec_shade" )
+procedure Config_prec_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+RES@cnFillMode           = "RasterFill"
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                             ; font height
+
+cmap                    := read_colormap_file("BlAqGrYeOrReVi200")
+cmap(0,:)                = (/0,0,0,0/)      ; make first color fully transparent
+RES@cnFillPalette        = cmap
+RES@cnFillOpacityF       = 1.               ; .85 
+RES@cnLevelSelectionMode = "ManualLevels"   ; set manual contour levels
+RES@cnMinLevelValF       =      5           ; set min contour level
+RES@cnMaxLevelValF       =     60           ; set max contour level
+RES@cnLevelSpacingF      =      5           ; set contour spacing
+
+end
 
