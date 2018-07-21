@@ -24,9 +24,9 @@ begin
   WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
-  OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_rv-C_rmw/"+TY_NAME+"/"
+  OUT_DIRC   =  "/Volumes/Dropbox/research/ncl/draw/S_qvaporflux-C_vt/"+TY_NAME+"/"
 
-  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_rv-C_rmw-v1-"
+  OUTNAME_PREFIX = "WRF-trackingcut-hovumueller-S_qvaporflux-C_vt-v1-"
 
   INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/"20160103"/)     ; initial time/date
    
@@ -118,13 +118,14 @@ begin
     zz         = new ( (/nz,nlat,nlon/),"float")
     uu         = new ( (/nz,nlat,nlon/),"float")
     vv         = new ( (/nz,nlat,nlon/),"float")
-    rv         = new ( (/nz,nlat,nlon/),"float")
+    qvapor     = new ( (/nz,nlat,nlon/),"float")
+    qvaporflux = new ( (/nz,nlat,nlon/),"float")
 
-    vt_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
-    rv_levs    = new ( (/n_ZLEVS,nlat,nlon/),"float")
-    if(isdefined("vt_cyclind").eq.False)then
-    rv_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
-    vt_cyclind = new ( (/n_MEMBER,n_timestep,n_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    qvaporflux_levs = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    vt_levs         = new ( (/N_ZLEVS,nlat,nlon/),"float")
+    if(isdefined("h_diabatic_cyclind").eq.False)then
+    qvaporflux_cyclind = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
+    vt_cyclind         = new ( (/n_MEMBER,n_timestep,N_ZLEVS,N_RADIUS+1,N_ANGLE/),"float") 
     end if
     vt_max_r   = new (n_timestep,"integer") 
 
@@ -140,14 +141,14 @@ begin
         do it = 0,n_times-1, N_SKIPTIME
         times(c_ttt) = timesd(it)                             ; get all times in the file
         zz(:,:,:)    = wrf_user_getvar(f[iii],"z",it)         ; z on mass points
+        dammy = f[iii]->QVAPOR
+        qvapor(:,:,:) = dammy(it,:,:,:)*1000
+        delete(dammy)
+
         uu(:,:,:)    = wrf_user_getvar(f[iii],"ua",it)         ; u on mass points
         vv(:,:,:)    = wrf_user_getvar(f[iii],"va",it)         ; v on mass points
-        rv(:,:,:)    = uv2vr_cfd (uu,vv,lat,lon, 3)/10^-4
-        copy_VarMeta( uu, rv )
-        rv@long_name = "Relative Vorticity"
-        rv@units     = "10^-4 s-1"
-
         vComps = calcWindComponents(uu,vv,lat,lon,c_lat(c_ttt),c_lon(c_ttt))
+
 
         if(n_ZLEVS.eq.1)then
         rv_levs(0,:,:)  = wrf_user_intrp3d(rv,zz(:,:,:),"h", ZLEVS,0.,False)
@@ -246,6 +247,64 @@ begin
       frame(wks01)
 
       delete(timesd)
+    delete(shade01_data)
+    delete(contour01_data)
+
+ave_time_sta = 48
+ave_time_end = 96
+
+;************************************************
+; create plot
+;************************************************
+; Set some basic resources
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(ave_time_sta)+"-"+times(ave_time_end))
+
+        res_title = True
+        res_title@gsnLeftString       = "FT"+ave_time_sta+"-FT"+ave_time_end
+        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
+
+        res_basis = True
+        res_basis@gsnDraw             = False
+        res_basis@gsnFrame            = False
+        res_basis@gsnMaximize         = True
+        res_basis@vpWidthF            = 0.80
+        res_basis@vpHeightF           = 0.60
+
+        Y_LABEL =  zlevs*0.001 
+
+        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tmXBMode            = "Explicit"
+        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
+        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+        res_basis@tmXBLabelFontHeightF= 0.02
+
+        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tmYLMode            = "Explicit"
+        res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+        res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+        res_basis@tmYLLabelFontHeightF= 0.02
+
+        res = True
+        res = res_basis
+        res = res_title
+
+        shade01_opts = True
+        shade01_opts = res
+        Config_qvaporflux_shade(shade01_opts)
+        
+        contour01_opts = True
+        contour01_opts = res
+        Config_vt_contour(contour01_opts)
+
+        shade01_data   = dim_avg_n(qvaporflux_cyclind(mmm,:,:,:,:),3)
+        contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
+        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(ave_time_sta:ave_time_end,:,:),0)   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(ave_time_sta:ave_time_end,:,:),0) ,contour01_opts)
+        overlay(plots,plots_contour)
+        draw(plots)
+        frame(wks01)
+        delete(shade01_data)
+        delete(contour01_data)
 
     end do ; mmm loop
 
