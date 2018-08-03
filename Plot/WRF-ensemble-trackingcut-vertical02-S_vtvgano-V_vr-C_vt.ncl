@@ -24,14 +24,15 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+;  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+  WRF_DIRC   = "/Users/yoshioka-hiroaki/mnt/mnt_kalimantan/WRF/PALI-v2/"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
   OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_vtvgano-V_vr-C_vt/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_vtvgano-V_vr-C_vt-v1-"
 
-  INIT = stringtointeger(systemfunc("read ifland; echo $ifland")) ;(/"20160103"/) ; initial time/date
+  INIT = (systemfunc("read ifland; echo $ifland")) ;(/"20160103"/) ; initial time/date
    
   MEMBER        = (/"p09", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "c00", "p10" /)
   SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ;   ON is draw, OFF is not.
@@ -175,7 +176,7 @@ begin
         vr_levs(:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
         pp_levs(:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
         tk_levs(:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-        rho_levs(:,:,:)      = pp_levs(:,:,:)*100 /(rgas*tk_levs(:,:,:) )    ; density => kg/m3
+        rho_levs(:,:,:)      = where(tk_levs(:,:,:).ne.0, pp_levs(:,:,:)*100/(rgas*tk_levs(:,:,:)),rho_levs@_FillValue )    ; density => kg/m3
 
         dammy = rectangular2polar(vt_levs(:,:,:),N_RADIUS,N_ANGLE,c_ilat(c_ttt),c_ilon(c_ttt))
         vt_cyclind(mmm,c_ttt,:,:,:) = dammy[0]
@@ -308,16 +309,10 @@ begin
     delete(contour01_data)
 
 if(dimsizes(AVE_TIME_END).ne.0)then
-      do iia = 0, dimsizes(AVE_TIME_END)-1,1
 ;************************************************
 ; create plot
 ;************************************************
 ; Set some basic resources
-        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
-
-        res_title = True
-        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
-        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
         res_basis = True
         res_basis@gsnDraw             = False
@@ -356,8 +351,7 @@ if(dimsizes(AVE_TIME_END).ne.0)then
         vector01_opts = res
         Config_vr_vector(vector01_opts)
 
-
-        shade01_data   = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)-dim_avg_n(vg_cyclind(mmm,:,:,:,:),3) 
+        shade01_data   = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3 )- dim_avg_n(vg_cyclind(mmm,:,:,:,:),3) 
         contour01_data = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3)
  
         vector01_data_vr  = new((/n_timestep,N_ZLEVS,N_RADIUS+1/),"float")  
@@ -370,6 +364,14 @@ if(dimsizes(AVE_TIME_END).ne.0)then
           end do
         end do
 
+        do iia = 0, dimsizes(AVE_TIME_END)-1,1
+
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
+
+        res_title = True
+        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
+        res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
+
         plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
         plots_vector   = gsn_csm_vector(wks01, dim_avg_n(vector01_data_vr(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0), dim_avg_n(vector01_data_ww(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0), vector01_opts) 
@@ -377,17 +379,37 @@ if(dimsizes(AVE_TIME_END).ne.0)then
         overlay(plots,plots_vector)
         draw(plots)
         frame(wks01)
+    
+        end do ; iia loop
+
         delete(shade01_data)
         delete(contour01_data)
-        delete( vector01_data_vr )
-        delete( vector01_data_ww )
-      end do ; iia loop
+        delete(vector01_data_vr)
+        delete(vector01_data_ww)
+
 end if
 
     end do ; mmm loop
-exit
+
   if(SWITCH_MEAN .eq."ON") then
   print("Now start to drawing ENSEMBLE MEAN.")  
+
+;************************************************
+; Calcurate of ENSEMBLE MEAN and SPREAD for some parameters
+;************************************************
+
+        dammy01   = dim_avg_n(vt_cyclind(:,:,:,:,:),4)-dim_avg_n(vg_cyclind(:,:,:,:,:),4) 
+        dammy02   = dim_avg_n(vt_cyclind(:,:,:,:,:),4)
+        dammy03   = dim_avg_n(vr_cyclind(:,:,:,:,:),4)
+
+        anomaly_mean = dim_avg_n(dammy01,0)
+        anomaly_sprd = dim_stddev_n(dammy01,0)
+        vt_mean   = dim_avg_n(dammy02,0)
+        vr_mean   = dim_avg_n(dammy03,0)
+
+        delete(dammy01)
+        delete(dammy02)
+        delete(dammy03)  
 
 ;************************************************
 ; create plot of ENSEMBLE MEAN and SPREAD
@@ -412,8 +434,95 @@ exit
     wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(it))
 
         res_title = True
-        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
+        res_title@gsnLeftString       = ft_time + ", " + times(it)
         res_title@gsnRightString      = "Mem; MEAN"
+
+        res_basis = True
+        res_basis@gsnDraw             = False
+        res_basis@gsnFrame            = False
+        res_basis@gsnMaximize         = True
+        res_basis@vpWidthF            = 0.60
+        res_basis@vpHeightF           = 0.60
+
+        Y_LABEL =  zlevs*0.001 
+
+        res_basis@tiXAxisString       = "Radius from the centre (km)"  
+        res_basis@tmXBMode            = "Explicit"
+        res_basis@tmXBValues          = ispan(0,N_RADIUS,5)
+        res_basis@tmXBLabels          = tostring(ispan(0,N_RADIUS,5)*10)
+        res_basis@tmXBLabelFontHeightF= 0.02
+
+        res_basis@tiYAxisString       = "Height(km)"  
+        res_basis@tmYLMode            = "Explicit"
+        res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
+        res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
+        res_basis@tmYLLabelFontHeightF= 0.02
+
+        shade01_opts = True
+        shade01_opts = res
+        Config_vtvgano_shade(shade01_opts)
+        
+        contour01_opts = True
+        contour01_opts = res
+        Config_vt_contour_green(contour01_opts)
+
+        vector01_opts = True
+        vector01_opts = res
+        Config_vr_vector(vector01_opts)
+
+        shade01_data     = anomaly_mean(it,:,:)
+        contour01_data   = vt_mean(it,:,:)
+
+        vector01_data_vr = new((/N_ZLEVS,N_RADIUS+1/),"float") 
+
+        do nl01=0,N_ZLEVS-1,5
+          do nl02=0,N_RADIUS,2
+          vector01_data_vr(nl01,nl02) =  vr_mean(it,nl01,nl02)
+          end do
+        end do
+
+        vector01_data_ww = new((/N_ZLEVS,N_RADIUS+1/),"float") 
+        vector01_data_ww@_FillValue  = 0.0 
+
+        plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
+        plots_vector   = gsn_csm_vector(wks01, vector01_data_vr, vector01_data_ww, vector01_opts) 
+        overlay(plots,plots_contour)
+        overlay(plots,plots_vector)
+        draw(plots)
+        frame(wks01)
+  
+        res_title@gsnRightString      = "Mem; Sprd"
+        res = res_basis
+        res = res_title
+
+        shade02_opts = True
+        shade02_opts = res
+        Config_vtvganoSprd_shade(shade02_opts)
+
+        shade02_data   = anomaly_sprd(it,:,:)
+        plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
+        plots_contour  = gsn_csm_contour(wks02, contour01_data ,contour01_opts)
+        overlay(plots,plots_contour)
+        draw(plots)
+        frame(wks02)
+
+        delete(shade01_data)
+        delete(contour01_data)
+        delete( vector01_data_vr )
+        delete( vector01_data_ww )
+        delete(shade02_data)
+
+
+    end do ;;;it loop
+
+
+   if(dimsizes(AVE_TIME_END).ne.0)then
+
+;************************************************
+; create plot
+;************************************************
+; Set some basic resources
 
         res_basis = True
         res_basis@gsnDraw             = False
@@ -438,7 +547,6 @@ exit
 
         res = True
         res = res_basis
-        res = res_title
 
         shade01_opts = True
         shade01_opts = res
@@ -452,32 +560,60 @@ exit
         vector01_opts = res
         Config_vr_vector(vector01_opts)
 
+        shade02_opts = True
+        shade02_opts = res
+        Config_vtvganoSprd_shade(shade02_opts)
 
-       
-    shade01_data   = dim_avg_n(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3),0)
-    contour01_data = dim_avg_n(dim_avg_n(vt_cyclind(:,it,:,:,:),3),0)
-    plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
-    plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
-    overlay(plots,plots_contour)
-    draw(plots)
-    frame(wks01)
-  
-    res_title@gsnRightString      = "Mem; Sprd"
-    res = res_basis
-    res = res_title
+        shade01_data    = anomaly_mean(:,:,:)
+        contour01_data  = vt_mean(:,:,:)
+        shade02_data    = anomaly_sprd(:,:,:)
 
-    shade02_opts = True
-    shade02_opts = res
-    Config_dbzSprd_shade(shade02_opts)
+        vector01_data_vr = new((/n_timestep,N_ZLEVS,N_RADIUS+1/),"float") 
 
-    dammy=(dim_avg_n(h_diabatic_cyclind(:,it,:,:,:),3))
-    shade02_data   = dim_stddev_n(dammy,0)
-    delete(dammy)
-    plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
-    draw(plots)
-    frame(wks02)
+        do nl01=0,N_ZLEVS-1,5
+          do nl02=0,N_RADIUS,2
+          vector01_data_vr(:,nl01,nl02) =  vr_mean(:,nl01,nl02)
+          end do
+        end do
 
-    end do ;;;it loop
+        vector01_data_ww = new((/n_timestep,N_ZLEVS,N_RADIUS+1/),"float") 
+        vector01_data_ww@_FillValue  = 0.0 
+
+        do iia = 0, dimsizes(AVE_TIME_END)-1,1
+
+        wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-mean-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
+        wks02 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-sprd-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
+
+        res_title = True
+        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
+        res_title@gsnRightString      = "Mem; Mean" 
+
+        plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
+        plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
+        plots_vector   = gsn_csm_vector(wks01, dim_avg_n(vector01_data_vr(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0), dim_avg_n(vector01_data_ww(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0), vector01_opts) 
+        overlay(plots,plots_contour)
+        overlay(plots,plots_vector)
+        draw(plots)
+        frame(wks01)
+
+        res_title@gsnRightString      = "Mem; Sprd"
+
+        plots          = gsn_csm_contour(wks02, dim_avg_n(shade02_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade02_opts)
+        plots_contour  = gsn_csm_contour(wks02, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
+        overlay(plots,plots_contour)
+        draw(plots)
+        frame(wks02)
+
+
+
+        end do ; iia loop
+
+        delete(shade01_data)
+        delete(contour01_data)
+        delete(vector01_data_vr)
+        delete(vector01_data_ww)
+
+    end if
 
   end if
 
