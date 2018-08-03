@@ -344,6 +344,31 @@ RES@cnLevelSpacingF      =      1          ; set contour spacing
 
 end
 
+undef ( "Config_vtvganoSprd_shade" )
+procedure Config_vtvganoSprd_shade (  \
+  RES[*]           : logical \
+  )
+local none
+begin
+
+RES@cnFillOn             = True                   ; turn on color
+RES@lbLabelAutoStride    = True                   ; nice label bar labels
+RES@cnLinesOn            = False                  ; no contour lines
+
+RES@lbOrientation        = "vertical"
+RES@lbTitlePosition      = "Right"                           ; title location
+RES@lbTitleDirection     = "Across"                          ; letter angle
+RES@lbTitleAngleF        = 90.                               ; title angle
+RES@lbTitleFontHeightF   = 0.025                            ; font height
+
+RES@cnFillPalette        = "precip2_17lev"
+RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
+RES@cnMinLevelValF       =      0.5              ; set min contour level
+RES@cnMaxLevelValF       =       5              ; set max contour level
+RES@cnLevelSpacingF      =      0.5              ; set contour spacing
+
+end
+
 undef ( "Config_rvSprd_shade" )
 procedure Config_rvSprd_shade (  \
   RES[*]           : logical \
