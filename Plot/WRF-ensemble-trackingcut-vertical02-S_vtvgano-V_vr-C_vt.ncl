@@ -1,9 +1,9 @@
-; This file is Draw Configuration.
-; Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
+; This file is ncl script.
+; By Hiroaki Yoshioka(yoshioka@dpac.kyoto-u.ac.jp)
 ; History:
-; 23/06/2018 - 1st released
+; 06/08/2018 - 1st released
 ;
-; This script calcurate tangential wind and water vapor flux for vertical structure.
+; This script calcurate tangential wind, radial wind and gradient wind for vertical structure.
 ; WRF experimental result and track data required.
 ; Please rewrite only the argument of "Part - Enter Constant, Directory, NAME and so on" as necessary.
 ;
