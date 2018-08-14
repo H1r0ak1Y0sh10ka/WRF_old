@@ -93,12 +93,13 @@ procedure Config_vr_vector (  \
 local none
 begin
 
-RES@vcGlyphStyle           = "FillArrow"
-RES@vcFillArrowsOn           = True
-RES@vcFillArrowEdgeColor     = "black"
-RES@vcFillArrowEdgeColor     = "white"
-RES@vcLineArrowThicknessF    = 5
-RES@vcMinDistanceF           = 0.01
+RES@vcGlyphStyle              = "FillArrow"
+RES@vcFillArrowsOn            = True
+;RES@vcFillArrowEdgeColor     = "black"
+RES@vcFillArrowEdgeColor      = "white"
+RES@vcLineArrowThicknessF     = 5
+RES@vcFillArrowEdgeThicknessF = 4.0
+RES@vcMinDistanceF            = 0.01
 
 RES@vcRefLengthF             = 0.06
 RES@vcRefMagnitudeF          = 10 
@@ -337,6 +338,7 @@ RES@lbTitleAngleF        = 90.                               ; title angle
 RES@lbTitleFontHeightF   = 0.025                             ; font height
 
 RES@cnFillPalette        = "hotcold_18lev"
+RES@cnFillOpacityF       = 0.75 
 RES@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
 RES@cnMinLevelValF       =     -5           ; set min contour level
 RES@cnMaxLevelValF       =      5           ; set max contour level
