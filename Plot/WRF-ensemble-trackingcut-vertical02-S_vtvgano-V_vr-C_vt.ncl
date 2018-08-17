@@ -24,19 +24,22 @@ begin
 
   TY_NAME = "PALI"          ; case name
 
-;  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
-  WRF_DIRC   = "/Users/yoshioka-hiroaki/mnt/mnt_kalimantan/WRF/PALI-v2/"
+  WRF_DIRC   = "/Volumes/RAID01/research/DATA/WRF/PALI-v2/"    ; WRF_DIRC = "/Volumes/Yoshi-HDD01"
+;  WRF_DIRC   = "/Users/yoshioka-hiroaki/mnt/mnt_kalimantan/WRF/PALI-v2/"
   TRACK_DIRC = "/Volumes/HDD01/research/ncl/wrf/track/"
   TRACK_VER  = "v25"
   OUT_DIRC   =  "~/Dropbox/research/ncl/draw/S_vtvgano-V_vr-C_vt/"+TY_NAME+"/"
 
   OUTNAME_PREFIX = "WRF-trackingcut-vertical02-S_vtvgano-V_vr-C_vt-v1-"
 
+  print("INPUT INITIAL DATE (e.g. 20160103, 20160106-p06deg )") 
   INIT = (systemfunc("read ifland; echo $ifland")) ;(/"20160103"/) ; initial time/date
-   
-  MEMBER        = (/"p09", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "c00", "p10" /)
+
+  print("INPUT ENSEMBLE MEAN SWITCH (e.g. on(draw), off(no))") 
+  MEMBER        = (/"p10", "p05", "p01", "p02", "p03", "p04", "p06", "p07", "p08", "c00", "p09" /)
   SWITCH_MEAN   = (systemfunc("read ifland; echo $ifland")) ;   ON is draw, OFF is not.
 
+  print("INPUT SKIPTIME (e.g. 1, 6, 12, 24)") 
   N_SKIPTIME    = stringtointeger(systemfunc("read ifland; echo $ifland"))       ; number of skip time  
 
   RADIUS_KM     = 200      ; kilometer
@@ -48,8 +51,24 @@ begin
 
   TYPE = "png"  ;  TYPE = "eps"  ;  TYPE = "x11"
 
-  AVE_TIME_STA = (/48,96/)
-  AVE_TIME_END = (/96,144/)
+  ;print("INPUT NUMBER_PAIRS_AVERAGE (e.g. 0,1,2...0 means not draw temporal figure.)") 
+  ;N_PAIR_AVE   = stringtointeger(systemfunc("read -a ifland; echo $ifland"))
+
+  ;if(N_PAIR_AVE.ne.0)
+  ;print("INPUT AVERAGE START TIMESTEP  (e.g.48,96)") 
+  ;SYS = systemfunc("read -a s_ifland")
+  ;print("INPUT AVERAGE END TIMESTEP  (e.g.96,144)") 
+  ;SYS = systemfunc("read -a e_ifland")
+  ;AVE_TIME_STA = new (N_PAIR_AVE,"integer")
+  ;AVE_TIME_END = new (N_PAIR_AVE,"integer")
+  ;do na=0,N_PAIR_AVE-1,1  
+  ;AVE_TIME_STA(na)= stringtointeger(systemfunc("echo ${s_ifland[na]}"))
+  ;AVE_TIME_END(na)= stringtointeger(systemfunc("echo ${e_ifland[na]}"))
+  ;end do
+  
+   AVE_TIME_STA = (/48,96/) ;stringtointeger(systemfunc("read -a ifland; echo ${ifland[1]}"))  ;(/48,96/);
+   AVE_TIME_END = (/96,144/)
+  ;end if
 
 ;********** Part - Calculate dimensions and Define directory from constant (do NOT change!!!) **********
  
@@ -215,9 +234,10 @@ begin
              vg_cyclind(mmm,c_ttt,iz,ir,ia) =  default_fillvalue(typeof(vg_cyclind))
              end if
              end do
-           end do
-         end do    
+          end do
+        end do    
 
+        vg_cyclind@units = vt@units
         print("Now drawing time is "+times(c_ttt))
 ;************************************************
 ; create plot of EACH MEMBER
@@ -369,7 +389,7 @@ if(dimsizes(AVE_TIME_END).ne.0)then
         wks01 = gsn_open_wks(TYPE,OUT_DIRC + "/" + OUTNAME_PREFIX + TY_NAME + "-" + INIT(nnn) + "-" + MEMBER(mmm) + "-" + ft_time + "-" + times(AVE_TIME_STA(iia))+"-"+times(AVE_TIME_END(iia)))
 
         res_title = True
-        res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
+        res_title@gsnLeftString       = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
         res_title@gsnRightString      = "Mem; " + MEMBER(mmm)
 
         plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
@@ -435,7 +455,7 @@ end if
 
         res_title = True
         res_title@gsnLeftString       = ft_time + ", " + times(it)
-        res_title@gsnRightString      = "Mem; MEAN"
+        res_title@gsnRightString      = "Mem; Mean"
 
         res_basis = True
         res_basis@gsnDraw             = False
@@ -457,6 +477,10 @@ end if
         res_basis@tmYLValues          = ispan(0,N_ZLEVS-1,10)
         res_basis@tmYLLabels          = Y_LABEL(ispan(0,N_ZLEVS-1,10))
         res_basis@tmYLLabelFontHeightF= 0.02
+
+        res = True
+        res = res_basis
+;        res = res_title
 
         shade01_opts = True
         shade01_opts = res
@@ -484,6 +508,10 @@ end if
         vector01_data_ww = new((/N_ZLEVS,N_RADIUS+1/),"float") 
         vector01_data_ww@_FillValue  = 0.0 
 
+        shade01_opts   = res_title
+        contour01_opts = res_title
+        vector01_opts  = res_title
+
         plots          = gsn_csm_contour(wks01, shade01_data   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, contour01_data ,contour01_opts)
         plots_vector   = gsn_csm_vector(wks01, vector01_data_vr, vector01_data_ww, vector01_opts) 
@@ -491,14 +519,18 @@ end if
         overlay(plots,plots_vector)
         draw(plots)
         frame(wks01)
-  
+    
+        res_title = True
+        res_title@gsnLeftString       = ft_time + ", " + times(it)
         res_title@gsnRightString      = "Mem; Sprd"
         res = res_basis
-        res = res_title
 
         shade02_opts = True
         shade02_opts = res
         Config_vtvganoSprd_shade(shade02_opts)
+
+        shade02_opts   = res_title
+        contour01_opts = res_title
 
         shade02_data   = anomaly_sprd(it,:,:)
         plots          = gsn_csm_contour(wks02, shade02_data   ,shade02_opts)
@@ -587,6 +619,9 @@ end if
         res_title = True
         res_title@gsnLeftString            = "FT"+AVE_TIME_STA(iia)+"-FT"+AVE_TIME_END(iia)
         res_title@gsnRightString      = "Mem; Mean" 
+        shade01_opts = res_title
+        contour01_opts = res_title
+        vector01_opts = res_title
 
         plots          = gsn_csm_contour(wks01, dim_avg_n(shade01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade01_opts)
         plots_contour  = gsn_csm_contour(wks01, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
@@ -597,14 +632,14 @@ end if
         frame(wks01)
 
         res_title@gsnRightString      = "Mem; Sprd"
+        shade02_opts = res_title
+        contour01_opts = res_title
 
         plots          = gsn_csm_contour(wks02, dim_avg_n(shade02_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0)   ,shade02_opts)
         plots_contour  = gsn_csm_contour(wks02, dim_avg_n(contour01_data(AVE_TIME_STA(iia):AVE_TIME_END(iia),:,:),0) ,contour01_opts)
         overlay(plots,plots_contour)
         draw(plots)
         frame(wks02)
-
-
 
         end do ; iia loop
 
