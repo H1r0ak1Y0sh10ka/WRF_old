@@ -98,7 +98,7 @@ RES@vcFillArrowsOn            = True
 ;RES@vcFillArrowEdgeColor     = "black"
 RES@vcFillArrowEdgeColor      = "white"
 RES@vcLineArrowThicknessF     = 5
-RES@vcFillArrowEdgeThicknessF = 4.0
+RES@vcFillArrowEdgeThicknessF = 8.0
 RES@vcMinDistanceF            = 0.01
 
 RES@vcRefLengthF             = 0.06
