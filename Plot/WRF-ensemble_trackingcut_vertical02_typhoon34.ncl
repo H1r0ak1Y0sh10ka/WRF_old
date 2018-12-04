@@ -3,7 +3,7 @@
 
 load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/wrf/WRFUserARW.ncl"
-load "/Volumes/HDD01/research/ncl/wrf/radialAvg.ncl"
+load "./radialAvg.ncl"
 begin
 ;
 ; The WRF ARW input file.  
@@ -14,11 +14,11 @@ begin
    TY_NAME = "PALI"
 
    WORK = "/Volumes/RAID01"
-  ; WORK = "/Volumes/Yoshi-HDD01"
+   ;WORK = "/Volumes/Yoshi-HDD01"
    dirc = WORK+ "/research/DATA/WRF/PALI-v2/"
  
-   init = (/"20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
-;   init = (/"20160106"/)
+   ;init = (/"20160106","20160106-p03deg","20160106-p06deg","20160106-p10deg","20160106-p04deg","20160106-p05deg","20160106-p02deg","20160106-p07deg","20160106-p08deg","20160106-p09deg","20160106-p01deg","20160106-p20deg"/)
+   init = (/"20160103"/)
    n_init = dimsizes(init)
    
    member = (/ "p09","c00", "p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p10" /)
@@ -181,7 +181,8 @@ begin
      vr_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(vr(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
      pp_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(pp(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
      tk_levs(c_ttt,:,:,:)       = wrf_user_intrp3d(tk(:,:,:),zz(:,:,:),"h", zlevs,0.,False)
-     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:) )         ; density => kg/m3
+     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*where(tk_levs(c_ttt,:,:,:).ne.0, tk_levs(c_ttt,:,:,:) , tk_levs@_FillValue))         ; density => kg/m3
+;     rho_levs(c_ttt,:,:,:)      = pp_levs(c_ttt,:,:,:)*100 /(rgas*tk_levs(c_ttt,:,:,:))         ; density => kg/m3
 
     do nr = 0,n_radius,1
     do na = 0,n_angle_division-1
@@ -326,7 +327,7 @@ begin
    vg_d  = dim_avg_n(vg_cyclind(mmm,c_ttt,:,:,:),2)
    vt_mean  = dim_avg_n(vt_cyclind(mmm,c_ttt,:,:,:),2) 
 
-   plots         = gsn_csm_contour(wks01, 100*((vt_mean-vg_d)/vt_mean)  ,shade01_opts)
+   plots         = gsn_csm_contour(wks01, 100*((vt_mean-vg_d)/where(vg_d.ne.0, vg_d, vg_d@_FillValue))  ,shade01_opts)
    plots_contour = gsn_csm_contour(wks01, vt_mean,contour01_opts)
 
   vector01_opts = True 
@@ -385,7 +386,7 @@ frame(wks01)
 
   delete(timesd)
 
-exit
+
 ave_time_sta = 48
 ave_time_end = 96
 
@@ -393,7 +394,7 @@ ave_time_end = 96
 ; create plot
 ;************************************************
 ; Set some basic resources
-  wks01 = gsn_open_wks(type,"./WRF-typhoon30-vertical02-v1_PALI_"+init(nnn)+"_"+member(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
+  wks01 = gsn_open_wks(type,"./WRF-typhoon34-vertical02-v1_PALI_"+init(nnn)+"_"+member(mmm)+"-trackingcut_"+times(ave_time_sta)+"-"+times(ave_time_end))
 
   res = True
   res@gsnDraw             = False
@@ -443,9 +444,9 @@ ave_time_end = 96
 
   shade01_opts@cnFillPalette = "hotcold_18lev"
   shade01_opts@cnLevelSelectionMode = "ManualLevels"       ; set manual contour levels
-  shade01_opts@cnMinLevelValF       =     -10              ; set min contour level
-  shade01_opts@cnMaxLevelValF       =      10              ; set max contour level
-  shade01_opts@cnLevelSpacingF      =       2              ; set contour spacing
+  shade01_opts@cnMinLevelValF       =     -100              ; set min contour level
+  shade01_opts@cnMaxLevelValF       =      100              ; set max contour level
+  shade01_opts@cnLevelSpacingF      =      25              ; set contour spacing
 
   contour01_opts = True 
   contour01_opts = res
@@ -474,7 +475,7 @@ ave_time_end = 96
    vt_dammy = dim_avg_n(vt_cyclind(mmm,:,:,:,:),3) 
    vt_mean  = dim_avg_n(vt_dammy(ave_time_sta:ave_time_end,:,:),0)
 
-   plots         = gsn_csm_contour(wks01, (vt_mean-vg_d)  ,shade01_opts)
+   plots         = gsn_csm_contour(wks01, 100*((vt_mean-vg_d)/where(vg_d.ne.0, vg_d, vg_d@_FillValue))  ,shade01_opts)
    plots_contour = gsn_csm_contour(wks01, vt_mean,contour01_opts)
 
    vector01_opts = True 
@@ -525,11 +526,6 @@ ave_time_end = 96
 
 draw(plots)
 frame(wks01)  
-
-   
-draw(plots)
-frame(wks01)  
-
    
 end do ; mmm loop
 
@@ -685,12 +681,6 @@ frame(wks02)
   
 draw(plots_sprd)
 frame(wks03)  
-
-
-
-;  resP@txString       =  "Case:"+TY_NAME+", Member:"+member(mmm) \   ; use this for NCL V6.3.0 and earlier
-;                        +"~C~Initial time:"+times(0)+", Time:"+times(it)+"."
-;  resP@txFontHeightF  = 0.018
 
 
 end do ; it loop
